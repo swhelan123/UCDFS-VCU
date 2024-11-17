@@ -1,6 +1,6 @@
 /*
 
-readCANData.cpp
+read_CAN_data.cpp
 Written by Shane Whelan
 UCD Formula Student
 
@@ -12,7 +12,7 @@ UCD Formula Student
 float cellVoltage = 0.0;
 int stateOfCharge = 0;
 
-void readCANData() {
+void read_CAN_data() {
   CAN_FRAME incoming;
 
   if (Can0.available()) {

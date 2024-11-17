@@ -26,10 +26,15 @@ void loop() {
   brake_light();
 
   // function to read CAN messages and update variables
-  readCANData();
+  read_CAN_data();
 
-  if (DEBUG_MODE)
-    ;
-  delay(200);  // small delay to stabilize readings and not overwhelm the serial output, probs remove this in final code
+  // function to handle APPS and store returned value in torque request var
+  double torque_request = get_apps_reading();
+
+  // send torque request 
+  send_torque_request(torque_request);
+
+  if (DEBUG_MODE) {
+    delay(200);  // small delay to stabilize readings and not overwhelm the serial output
+  }
 }
-

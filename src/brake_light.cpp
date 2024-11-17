@@ -16,7 +16,7 @@ void brake_light() {
     Serial.println(brakePressure);
   }
 
-  if (brakePressure > THRESHOLD) {
+  if (brakePressure > BRAKE_LIGHT_THRESHOLD) {
     digitalWrite(BRAKE_LIGHT_PIN, HIGH);
     if (DEBUG_MODE) Serial.println("Brake Light On");
   } else {

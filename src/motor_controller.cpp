@@ -9,34 +9,35 @@ UCD Formula Student
 #include "header.h"
 #include "globals.h"
 
-void send_torque_request(double torque_request) {
-  // convert torque request to integer number that will fill 1 byte
-  int torque_request_byte = floor((torque_request / 100) * 255);
-  
-  CAN_FRAME outgoing;
+void send_torque_request(double apps_voltage) {
+    // Scale voltage directly to Bamocar's torque range (0–32767)
+    uint16_t scaled_torque = (uint16_t)(((apps_voltage - PEDAL_MIN) / (PEDAL_MAX - PEDAL_MIN)) * 32767);
 
-  // Set CAN ID for Bamocar motor controller
-  outgoing.id = 0x200;  // Update ID for Bamocar if needed
-  outgoing.extended = 0; // Standard frame
+    // Construct the CAN frame
+    CAN_FRAME outgoing;
+    outgoing.id = 0x200;           // Torque command ID
+    outgoing.extended = 0;         // Standard CAN frame
+    outgoing.length = 8;           // Fixed 8-byte frame
 
-  // Construct the CAN frame data
-  outgoing.data.byte[0] = (torque_request_byte >> 8) & 0xFF;  // High byte
-  outgoing.data.byte[1] = torque_request_byte & 0xFF;          // Low byte
-  outgoing.data.byte[2] = 0;                             // Reserved or additional data, if needed
-  outgoing.data.byte[3] = 0;
-  outgoing.data.byte[4] = 0;
-  outgoing.data.byte[5] = 0;
-  outgoing.data.byte[6] = 0;
-  outgoing.data.byte[7] = 0;
+    // Fill the CAN frame
+    outgoing.data.byte[0] = scaled_torque & 0xFF;          // Low byte of torque
+    outgoing.data.byte[1] = (scaled_torque >> 8) & 0xFF;   // High byte of torque
+    outgoing.data.byte[2] = 0x00;                          // Reserved
+    outgoing.data.byte[3] = 0x00;                          // Reserved
+    outgoing.data.byte[4] = 0x00;                          // Reserved
+    outgoing.data.byte[5] = 0x00;                          // Reserved
+    outgoing.data.byte[6] = 0x00;                          // Reserved
+    outgoing.data.byte[7] = 0x00;                          // Reserved
 
-  outgoing.length = 8; // Length of the CAN data frame
+    // Send the CAN frame
+    Can0.sendFrame(outgoing);
 
-  // Send the CAN frame
-  Can0.sendFrame(outgoing);
-
-  // Optional: Debug output
-  if (DEBUG_MODE) {
-    Serial.print("Torque Request Sent: ");
-    Serial.println(torque_request);
-  }
+    // Debugging output
+    if (DEBUG_MODE) {
+        Serial.print("APPS Voltage: ");
+        Serial.println(apps_voltage);
+        Serial.print("Scaled Torque Value: ");
+        Serial.println(scaled_torque);
+    }
 }
+

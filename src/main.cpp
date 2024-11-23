@@ -17,8 +17,8 @@ void setup() {
   Serial.println("CAN Initialized on Arduino Due!");
 
   // Setup CAN filters (optional, can be removed if we don't have a busy canbus with unwanted IDs/messages)
-  Can0.watchFor(0x100); // Watch for ID 0x100 (cell voltage)
-  Can0.watchFor(0x101); // Watch for ID 0x101 (state of charge)
+  // Can0.watchFor(0x100); // Watch for ID 0x100 (cell voltage)
+  // Can0.watchFor(0x101); // Watch for ID 0x101 (state of charge)
 }
 
 void loop() {
@@ -29,10 +29,14 @@ void loop() {
   read_CAN_data();
 
   // function to handle APPS and store returned value in torque request var
-  double torque_request = get_apps_reading();
+  double apps_voltage = get_apps_reading();
 
-  // send torque request 
-  send_torque_request(torque_request);
+  // send torque request + handle implausibility
+  if (apps_voltage >= 0) {
+      send_torque_request(apps_voltage);
+  } else {
+      Serial.println("No torque request sent due to APPS implausibility.");
+  }
 
   if (DEBUG_MODE) {
     delay(200);  // small delay to stabilize readings and not overwhelm the serial output

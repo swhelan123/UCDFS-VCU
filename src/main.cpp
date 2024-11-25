@@ -12,13 +12,19 @@ void setup() {
   Serial.begin(9600);
 
   // Initialize CAN0 with 500 kbps baud rate
-  Can0.begin(CAN_BPS_500K);
+  if (!Can0.begin(CAN_BPS_500K)) {
+    Serial.println("CAN Initialization failed! Stopping setup...");
+    while (1);  // Halt execution if CAN fails to initialize
+  }
 
   Serial.println("CAN Initialized on Arduino Due!");
 
   // Setup CAN filters (optional, can be removed if we don't have a busy canbus with unwanted IDs/messages)
   // Can0.watchFor(0x100); // Watch for ID 0x100 (cell voltage)
   // Can0.watchFor(0x101); // Watch for ID 0x101 (state of charge)
+
+  // initialise dashboard
+  setup_dashboard();
 }
 
 void loop() {
@@ -37,6 +43,9 @@ void loop() {
   } else {
       Serial.println("No torque request sent due to APPS implausibility.");
   }
+
+  // update dashboard
+  update_dashboard();
 
   if (DEBUG_MODE) {
     delay(200);  // small delay to stabilize readings and not overwhelm the serial output

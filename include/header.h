@@ -15,6 +15,7 @@ UCD Formula Student
 #include <due_can.h>
 #include "apps.h"
 #include "globals.h"
+#include <Nextion.h>
 
 // ------------ CONSTANTS ------------
 const int BRAKE_LIGHT_THRESHOLD = 500;
@@ -31,5 +32,7 @@ void brake_light();
 void read_CAN_data();
 void send_torque_request(double torqueRequest);
 double get_apps_reading();
+void setup_dashboard();
+void update_dashboard();
 
 #endif

@@ -19,7 +19,8 @@ UCD Formula Student
 
 // ------------ CONSTANTS ------------
 const int BRAKE_LIGHT_THRESHOLD = 500;
-const int DEBUG_MODE = 1;
+const int HYSTERESIS = 15; // arbitarily chose hysteresis band of 15, should be calibrated
+const int DEBUG_MODE = 0;
 
 // ------------ PINS ------------
 const int BRAKE_LIGHT_PIN = 9;
@@ -34,5 +35,9 @@ void send_torque_request(double torqueRequest);
 double get_apps_reading();
 void setup_dashboard();
 void update_dashboard();
+
+void dash_setup();
+void dash_loop();
+void changePage(int page);
 
 #endif

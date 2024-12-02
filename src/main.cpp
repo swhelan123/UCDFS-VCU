@@ -24,11 +24,11 @@ void setup() {
   // Can0.watchFor(0x101); // Watch for ID 0x101 (state of charge)
 
   // initialise dashboard
-  setup_dashboard();
+  dash_setup();
 }
 
 void loop() {
-  // function call to read brake pressure and handle brake light logic
+  // // function call to read brake pressure and handle brake light logic
   brake_light();
 
   // function to read CAN messages and update variables
@@ -41,11 +41,12 @@ void loop() {
   if (apps_voltage >= 0) {
       send_torque_request(apps_voltage);
   } else {
-      Serial.println("No torque request sent due to APPS implausibility.");
+      if (DEBUG_MODE)
+        Serial.println("No torque request sent due to APPS implausibility.");
   }
 
   // update dashboard
-  update_dashboard();
+  dash_loop();
 
   if (DEBUG_MODE) {
     delay(200);  // small delay to stabilize readings and not overwhelm the serial output

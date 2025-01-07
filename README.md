@@ -1,53 +1,73 @@
-MCU Systems and Functions Throttle
+# MCU Systems and Functions 
 
-Read both potentiometers of Acceleration-Pedal Position Sensor (APPS)
+## Throttle
 
-Decode voltage readings into software-readable values
+- [ ] Read both potentiometers of Acceleration-Pedal Position Sensor (APPS)
 
-Perform APPS plausibility check as per T11.8.8
+- [ ] Decode voltage readings into software-readable values
 
-In realtime construct and send CAN-bus frame with torque request that can be understood by the Bamocar motor controller Brake / Brake Light
+- [ ] Perform APPS plausibility check as per T11.8.8
 
-Send signal to activate brake light based on brake pressure sensor reading APPS / Brake Plausibility Check
+- [ ] In realtime construct and send CAN-bus frame with torque request that can be understood by the Bamocar motor controller 
 
-Read and decode voltage readings of APPS and Brake Pressure Sensor into software-readable values
+## Brake / Brake Light
 
-Implement function as per rule EV2.3 Shutdown Circuit
+- [ ] Send signal to activate brake light based on brake pressure sensor reading 
 
-Monitor shutdown circuit breakpoints between components (see schematic). Then send 0-amp current request / 0 Nm torque request to motor controller and then open shutdown circuit relay associated with MCU (strictly in that order)
+## APPS / Brake Plausibility Check
 
-Indicate on the dashboard that there’s a fault if circuit is broken and the cause of fault (BMS/IMD/etc)
+- [ ] Read and decode voltage readings of APPS and Brake Pressure Sensor into software-readable values
 
-Send signal to shutdown circuit to close the associated MCU relay when MCU is active with no faults
+- [ ] Implement function as per rule EV2.3 
 
-Send 0-amp current request / 0Nm torque request to motor controller and then open shutdown circuit relay if CAN bus fault is detected (strictly in that order) BMS
+## Shutdown Circuit
 
-Communicate with Orion BMS 2 using CAN-bus to receive battery state-of-charge, voltage, current and temperature readings, and to detect BMS faults.
+- [ ] Monitor shutdown circuit breakpoints between components (see schematic). Then send 0-amp current request / 0 Nm torque request to motor controller and then open shutdown circuit relay associated with MCU (strictly in that order)
 
-Show the useful info and faults on the dashboard screen. Motor Controller
+- [ ] Indicate on the dashboard that there’s a fault if circuit is broken and the cause of fault (BMS/IMD/etc)
 
-Implement a power (current) limiter for use in the endurance events. Power profiles for full power (acceleration/skidpad/sprint events) and reduced power (endurance event).
+- [ ] Send signal to shutdown circuit to close the associated MCU relay when MCU is active with no faults
 
-Make this power profile selectable by the driver on the dashboard. Dashboard
+- [ ] Send 0-amp current request / 0Nm torque request to motor controller and then open shutdown circuit relay if CAN bus fault is detected (strictly in that order) 
 
-Show useful data from sensors on the screen (if any)
+## BMS
 
-Receive signal from BMS and IMD for detecting faults and send signal to cockpit LEDs. Precharge/TS activation procedure
+- [ ] Communicate with Orion BMS 2 using CAN-bus to receive battery state-of-charge, voltage, current and temperature readings, and to detect BMS faults.
 
-Monitor for push of precharge button in cockpit and send signal to precharge circuit to activate precharge procedure if pre-requisite conditions are met.
+- [ ] Show the useful info and faults on the dashboard screen. 
 
-Monitor precharge circuit for signal that indicates when precharge has completed.
+## Motor Controller
 
-Display current status of precharge on dashboard screen.
+- [ ] Implement a power (current) limiter for use in the endurance events. Power profiles for full power (acceleration/skidpad/sprint events) and reduced power (endurance event).
 
-Prohibit TS Activate button from closing AIRs until precharge procedure is complete Discharge Circuit
+- [ ] Make this power profile selectable by the driver on the dashboard. 
 
-Monitor signal indicating discharge status in discharge circuit.
+## Dashboard
 
-Raise fault if discharging when AIRs are closed and open MCU shutdown circuit relay.
+- [ ] Show useful data from sensors on the screen (if any)
 
-Display fault on dashboard screen. Ready-to-drive Procedure
+- [ ] Receive signal from BMS and IMD for detecting faults and send signal to cockpit LEDs. 
 
-Implement RTD procedure, including reading necessary sensors (brake and push button), ensuring actions are performed in the required order.
+## Precharge/TS activation procedure
 
-If all actions are performed in the correct order, send signal to RTD speaker to activate RTD sound.
+- [ ] Monitor for push of precharge button in cockpit and send signal to precharge circuit to activate precharge procedure if pre-requisite conditions are met.
+
+- [ ] Monitor precharge circuit for signal that indicates when precharge has completed.
+
+- [ ] Display current status of precharge on dashboard screen.
+
+- [ ] Prohibit TS Activate button from closing AIRs until precharge procedure is complete 
+
+## Discharge Circuit
+
+- [ ] Monitor signal indicating discharge status in discharge circuit.
+
+- [ ] Raise fault if discharging when AIRs are closed and open MCU shutdown circuit relay.
+
+- [ ] Display fault on dashboard screen. 
+
+## Ready-to-drive Procedure
+
+- [ ] Implement RTD procedure, including reading necessary sensors (brake and push button), ensuring actions are performed in the required order.
+
+- [ ] If all actions are performed in the correct order, send signal to RTD speaker to activate RTD sound.

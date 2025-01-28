@@ -1,45 +1,40 @@
-/*
-
-motor_controller.cpp
-Written by ShengXin Chen (Jerry), Shane Whelan
-UCD Formula Student
-
-*/
+/* 
+ * motor_controller.cpp
+ * Written by ShengXin Chen (Jerry), Shane Whelan
+ * UCD Formula Student
+ */
 
 #include "header.h"
 #include "globals.h"
 
-void send_torque_request(double apps_voltage) {
-    // Scale voltage directly to Bamocar's torque range (0–32767)
-    uint16_t scaled_torque = (uint16_t)(((apps_voltage - PEDAL_MIN) / (PEDAL_MAX - PEDAL_MIN)) * 32767);
+// Include the Bamocar library headers
+#include "bamocar-due.h"
 
-    
+// Create a Bamocar object on mailbox 0
+static Bamocar bamocar(0);
 
-    // Construct the CAN frame
-    CAN_FRAME outgoing;
-    outgoing.id = 0x201;           // Torque command ID
-    outgoing.extended = 0;         // Standard CAN frame
-    outgoing.length = 8;           // Fixed 8-byte frame
+// OPTIONAL: If you need to override the default CAN IDs (0x201 rx, 0x181 tx),
+// uncomment and adjust as needed:
+// static void initMotorControllerIDs() {
+//     bamocar.setRxID(0x201);
+//     bamocar.setTxID(0x181);
+// }
 
-    // Fill the CAN frame
-    outgoing.data.byte[0] = scaled_torque & 0xFF;          // Low byte of torque
-    outgoing.data.byte[1] = (scaled_torque >> 8) & 0xFF;   // High byte of torque
-    outgoing.data.byte[2] = 0x00;                          // Reserved
-    outgoing.data.byte[3] = 0x00;                          // Reserved
-    outgoing.data.byte[4] = 0x00;                          // Reserved
-    outgoing.data.byte[5] = 0x00;                          // Reserved
-    outgoing.data.byte[6] = 0x00;                          // Reserved
-    outgoing.data.byte[7] = 0x00;                          // Reserved
+void send_torque_request(double torque_request)
+{
+    // Clamp to 0-100% for safety
+    if (torque_request < 0)   torque_request = 0;
+    if (torque_request > 100) torque_request = 100;
 
-    // Send the CAN frame
-    Can0.sendFrame(outgoing);
+    // Bamocar expects a fraction (0.0 to 1.0), so convert
+    float torqueFraction = torque_request / 100.0;
 
-    // Debugging output
+    // Use the library call to send torque
+    bamocar.setTorque(torqueFraction);
+
     if (DEBUG_MODE) {
-        Serial.print("APPS Voltage: ");
-        Serial.println(apps_voltage);
-        Serial.print("Scaled Torque Value: ");
-        Serial.println(scaled_torque);
+        Serial.print("Torque Request Sent: ");
+        Serial.println(torque_request);
     }
 }
 

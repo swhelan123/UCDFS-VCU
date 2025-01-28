@@ -20,7 +20,7 @@ void read_CAN_data() {
 
     switch (incoming.id) {
       case 0x100:
-        cellVoltage = ((incoming.data.byte[0] << 8) | incoming.data.byte[1]) * 0.001;
+        cellVoltage = incoming.data.byte[0];
         if (DEBUG_MODE) {
           Serial.print("Cell Voltage: ");
           Serial.println(cellVoltage);

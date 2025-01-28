@@ -1,11 +1,24 @@
+/*
+
+bamocar-due.h
+
+*/
+
 #pragma once
 
 #include <Arduino.h>
+#ifdef min
+#undef min
+#endif
+
+#ifdef max
+#undef max
+#endif
 #include "due_can.h"
 #include "bamocar-registers.h"
 #include <functional>
 
-#define CAN_TIMEOUT 0.01
+// #define CAN_TIMEOUT 0.01
 #define TORQUE_MAX_PERCENT 1.00
 
 class M_data {

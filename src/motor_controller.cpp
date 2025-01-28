@@ -1,42 +1,39 @@
-/*
-
-motor_controller.cpp
-Written by ShengXin Chen (Jerry), Shane Whelan
-UCD Formula Student
-
-*/
+/* 
+ * motor_controller.cpp
+ * Written by ShengXin Chen (Jerry), Shane Whelan
+ * UCD Formula Student
+ */
 
 #include "header.h"
 #include "globals.h"
 
-void send_torque_request(double torque_request) {
-  // convert torque request to integer number that will fill 1 byte
-  int torque_request_byte = floor((torque_request / 100) * 255);
-  
-  CAN_FRAME outgoing;
+// Include the Bamocar library headers
+#include "bamocar-due.h"
 
-  // Set CAN ID for Bamocar motor controller
-  outgoing.id = 0x200;  // Update ID for Bamocar if needed
-  outgoing.extended = 0; // Standard frame
+// Create a Bamocar object on mailbox 0
+static Bamocar bamocar(0);
 
-  // Construct the CAN frame data
-  outgoing.data.byte[0] = (torque_request_byte >> 8) & 0xFF;  // High byte
-  outgoing.data.byte[1] = torque_request_byte & 0xFF;          // Low byte
-  outgoing.data.byte[2] = 0;                             // Reserved or additional data, if needed
-  outgoing.data.byte[3] = 0;
-  outgoing.data.byte[4] = 0;
-  outgoing.data.byte[5] = 0;
-  outgoing.data.byte[6] = 0;
-  outgoing.data.byte[7] = 0;
+// OPTIONAL: If you need to override the default CAN IDs (0x201 rx, 0x181 tx),
+// uncomment and adjust as needed:
+// static void initMotorControllerIDs() {
+//     bamocar.setRxID(0x201);
+//     bamocar.setTxID(0x181);
+// }
 
-  outgoing.length = 8; // Length of the CAN data frame
+void send_torque_request(double torque_request)
+{
+    // Clamp to 0-100% for safety
+    if (torque_request < 0)   torque_request = 0;
+    if (torque_request > 100) torque_request = 100;
 
-  // Send the CAN frame
-  Can0.sendFrame(outgoing);
+    // Bamocar expects a fraction (0.0 to 1.0), so convert
+    float torqueFraction = torque_request / 100.0;
 
-  // Optional: Debug output
-  if (DEBUG_MODE) {
-    Serial.print("Torque Request Sent: ");
-    Serial.println(torque_request);
-  }
+    // Use the library call to send torque
+    bamocar.setTorque(torqueFraction);
+
+    if (DEBUG_MODE) {
+        Serial.print("Torque Request Sent: ");
+        Serial.println(torque_request);
+    }
 }

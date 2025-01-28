@@ -1,9 +1,13 @@
 /*
+* bamocar-due.cpp
 * Based on timoxd7/Bamocar-CAN
 * Ported for the Arduino Due by Hari Mohan
 */
 
 #include "bamocar-due.h"
+
+// necessary to define the static member declared in bamocar-due.h
+Bamocar* Bamocar::instance = nullptr; 
 
 void Bamocar::setRxID(uint16_t rxID) {
     _rxID = rxID;

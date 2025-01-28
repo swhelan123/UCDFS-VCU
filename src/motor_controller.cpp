@@ -12,11 +12,12 @@ UCD Formula Student
 void send_torque_request(double apps_voltage) {
     // Scale voltage directly to Bamocar's torque range (0–32767)
     uint16_t scaled_torque = (uint16_t)(((apps_voltage - PEDAL_MIN) / (PEDAL_MAX - PEDAL_MIN)) * 32767);
+
     
 
     // Construct the CAN frame
     CAN_FRAME outgoing;
-    outgoing.id = 0x200;           // Torque command ID
+    outgoing.id = 0x201;           // Torque command ID
     outgoing.extended = 0;         // Standard CAN frame
     outgoing.length = 8;           // Fixed 8-byte frame
 

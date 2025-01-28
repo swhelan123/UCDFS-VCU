@@ -19,10 +19,6 @@ void setup() {
 
   Serial.println("CAN Initialized on Arduino Due!");
 
-  // Setup CAN filters (optional, can be removed if we don't have a busy canbus with unwanted IDs/messages)
-  // Can0.watchFor(0x100); // Watch for ID 0x100 (cell voltage)
-  // Can0.watchFor(0x101); // Watch for ID 0x101 (state of charge)
-
   // initialise dashboard
   dash_setup();
 }
@@ -49,6 +45,7 @@ void loop() {
   dash_loop();
 
   if (DEBUG_MODE) {
-    delay(200);  // small delay to stabilize readings and not overwhelm the serial output
+    delay(800);  // small delay to stabilize readings and not overwhelm the serial output
   }
+  Serial.println("");
 }

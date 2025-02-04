@@ -46,6 +46,7 @@ void loop() {
 
   if (DEBUG_MODE) {
     delay(800);  // small delay to stabilize readings and not overwhelm the serial output
+    Serial.println("");
   }
-  Serial.println("");
+  
 }

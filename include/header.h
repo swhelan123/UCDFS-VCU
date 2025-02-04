@@ -24,9 +24,9 @@ const int DEBUG_MODE = 1; // 0 - most serial prints for debugging purposes will 
 
 // ------------ PINS ------------
 const int BRAKE_PRESSURE_SENSOR_PIN = A0;
-const int APPS_1_PIN = 7;
-const int APPS_2_PIN = 8;
-const int BRAKE_LIGHT_PIN = 9;
+const int APPS_1_PIN = A6;
+const int APPS_2_PIN = A7;
+const int BRAKE_LIGHT_PIN = 7;
 
 // ------------ FUNCTION PROTOTYPES ------------
 void brake_light();

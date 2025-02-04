@@ -22,9 +22,8 @@ static Bamocar bamocar(0);
 
 void send_torque_request(double torque_request)
 {
-    // Clamp to 0-100% for safety
-    if (torque_request < 0)   torque_request = 0;
-    if (torque_request > 100) torque_request = 100;
+    // Set 0% torque request for value outside valid range
+    if (torque_request < 0 || torque_request > 100) torque_request = 0;
 
     // Bamocar expects a fraction (0.0 to 1.0), so convert
     float torqueFraction = torque_request / 100.0;

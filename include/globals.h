@@ -12,5 +12,6 @@ UCD Formula Student
 
 extern float cellVoltage;
 extern int stateOfCharge;
+extern int brakePressure;
 
 #endif

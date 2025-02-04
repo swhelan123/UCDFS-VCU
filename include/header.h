@@ -23,10 +23,10 @@ const int HYSTERESIS = 15; // arbitarily chose hysteresis band of 15, should be 
 const int DEBUG_MODE = 1; // 0 - most serial prints for debugging purposes will not display. change to 1 for debugging messages to print
 
 // ------------ PINS ------------
+const int BRAKE_LIGHT_PIN = 7;
 const int BRAKE_PRESSURE_SENSOR_PIN = A0;
-const int APPS_1_PIN = 7;
-const int APPS_2_PIN = 8;
-const int BRAKE_LIGHT_PIN = 9;
+const int APPS_1_PIN = A6;
+const int APPS_2_PIN = A7;
 
 // ------------ FUNCTION PROTOTYPES ------------
 void brake_light();

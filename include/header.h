@@ -21,10 +21,10 @@ const int BRAKE_LIGHT_THRESHOLD = 500;
 const int DEBUG_MODE = 1;
 
 // ------------ PINS ------------
-const int BRAKE_LIGHT_PIN = 9;
+const int BRAKE_LIGHT_PIN = 7;
 const int BRAKE_PRESSURE_SENSOR_PIN = A0;
-const int APPS_1_PIN = 7;
-const int APPS_2_PIN = 8;
+const int APPS_1_PIN = A6;
+const int APPS_2_PIN = A7;
 
 // ------------ FUNCTION PROTOTYPES ------------
 void brake_light();

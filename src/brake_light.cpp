@@ -21,7 +21,7 @@ void brake_light() {
   if (brakePressure > BRAKE_LIGHT_THRESHOLD) {
     digitalWrite(BRAKE_LIGHT_PIN, HIGH);
     if (DEBUG_MODE) Serial.println("Brake Light On");
-  } else if (brakePressure > BRAKE_LIGHT_THRESHOLD - HYSTERESIS) {
+  } else if (brakePressure < BRAKE_LIGHT_THRESHOLD - HYSTERESIS) {
     digitalWrite(BRAKE_LIGHT_PIN, LOW);
     if (DEBUG_MODE) Serial.println("Brake Light Off");
   }

@@ -5,11 +5,11 @@
 #include "header.h"
 
 // Define Nextion text objects for variables
-NexText brake_pres = NexText(1, 0, "brake_pres");  
-NexText t1 = NexText(1, 0, "t1"); 
-NexText millis_c = NexText(1, 0, "millis_c");  
-NexText p1_text = NexText(1, 0, "t2");  
-NexText speed_text = NexText(2, 0, "t0");  
+NexText e1 = NexText(1, 4, "t1");  
+NexText e2 = NexText(1, 5, "t2"); 
+NexText e3 = NexText(1, 6, "t3");  
+NexText e4 = NexText(1, 7, "t4");  
+NexText e5 = NexText(1, 8, "t5");  
 
 // Nextion touch event list (not used yet, could be removed if touch function unused in final code)
 NexTouch *nex_listen_list[] = { NULL };
@@ -44,23 +44,23 @@ void dash_loop() {
   int fracSecs = (millis()%1000) / 10;
   int mod_millis = millis() % 5000;
 
-  // Update brake pressure on the Nextion display
+  // Update e1 on the Nextion display
   sprintf(buffer, "%d", brakePressure);
-  brake_pres.setText(buffer);
+  e1.setText(buffer);
 
   // Update milliseconds mod value on the Nextion display
   sprintf(buffer, "%d", mod_millis);
-  t1.setText(buffer);
+  e2.setText(buffer);
 
   // Update the text component on the Nextion display
-  sprintf(buffer, "hello world");
-  millis_c.setText(buffer);
+  sprintf(buffer, "millie");
+  e3.setText(buffer);
 
-  // Update the time in the p1_text field
+  // Update the time in the e4 field
   sprintf(buffer, "%02d:%02d:%02d.%02d", hours, minutes, seconds, fracSecs);
-  p1_text.setText(buffer);
+  e4.setText(buffer);
 
   int speed = (rand() % (101)) + 100;
-  sprintf(buffer, "%d", speed);
-  speed_text.setText(buffer);
+  sprintf(buffer, "%d", brakePressure);
+  e5.setText(buffer);
 }

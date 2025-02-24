@@ -21,10 +21,13 @@ void setup() {
 
   // initialise dashboard
   dash_setup();
+
+  // initialise pins to monitor errors
+  monitor_pins_setup();
 }
 
 void loop() {
-  // // function call to read brake pressure and handle brake light logic
+  // function call to read brake pressure and handle brake light logic
   brake_light();
 
   // function to read CAN messages and update variables
@@ -43,6 +46,9 @@ void loop() {
 
   // update dashboard
   dash_loop();
+
+  // monitor errors
+  monitor_pins_loop();
 
   if (DEBUG_MODE) {
     delay(800);  // small delay to stabilize readings and not overwhelm the serial output

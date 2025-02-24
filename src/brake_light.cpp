@@ -8,7 +8,7 @@ UCD Formula Student
 
 #include "header.h"
 
-int brakePressure = 0;
+int brakePressure;
 
 void brake_light() {
   brakePressure = analogRead(BRAKE_PRESSURE_SENSOR_PIN);

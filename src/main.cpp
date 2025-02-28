@@ -44,6 +44,8 @@ void loop() {
         Serial.println("No torque request sent due to APPS implausibility.");
   }
 
+  send_torque_request(2);
+
   // update dashboard
   dash_loop();
 

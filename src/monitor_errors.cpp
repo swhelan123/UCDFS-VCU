@@ -24,7 +24,7 @@ int error35 = 0;
 int error36 = 0;
 int error37 = 0;
 
-void monitor_errors_setup() {
+void monitor_pins_setup() {
   for (int pin = 22; pin <= 37; pin++) {
     pinMode(pin, INPUT);
   }

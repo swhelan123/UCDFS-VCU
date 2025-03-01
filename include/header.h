@@ -20,7 +20,7 @@ UCD Formula Student
 // ------------ CONSTANTS ------------
 const int BRAKE_LIGHT_THRESHOLD = 500; // brake pressure must be calibrated for expected brake light behaviour
 const int HYSTERESIS = 15; // arbitarily chose hysteresis band of 15, should be calibrated
-const int DEBUG_MODE = 0; // 0 - most serial prints for debugging purposes will not display. change to 1 for debugging messages to print
+const int DEBUG_MODE = 1; // 0 - most serial prints for debugging purposes will not display. change to 1 for debugging messages to print
 
 // ------------ PINS ------------
 const int BRAKE_PRESSURE_SENSOR_PIN = A0;
@@ -36,6 +36,6 @@ double get_apps_reading();
 void dash_setup();
 void dash_loop();
 void monitor_pins_setup();
-void monitor_pins_loop()
+void monitor_pins_loop();
 
 #endif

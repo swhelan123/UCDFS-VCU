@@ -16,6 +16,9 @@ UCD Formula Student
 #include "apps.h"
 #include "globals.h"
 #include <Nextion.h>
+#include <Wire.h>
+#include <Adafruit_MPU6050.h>       // Using Adafruit's MPU6050 library
+#include <Adafruit_Sensor.h>
 
 // ------------ CONSTANTS ------------
 const int BRAKE_LIGHT_THRESHOLD = 500; // brake pressure must be calibrated for expected brake light behaviour
@@ -27,6 +30,7 @@ const int BRAKE_PRESSURE_SENSOR_PIN = A0;
 const int APPS_1_PIN = A6;
 const int APPS_2_PIN = A7;
 const int BRAKE_LIGHT_PIN = 7;
+const float TILT_THRESHOLD = 5.8;        // Activate brake light if tilt >= 5.8 degrees, ask Shane about the maths on this one
 
 // ------------ FUNCTION PROTOTYPES ------------
 void brake_light();

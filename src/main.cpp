@@ -20,7 +20,7 @@ void setup() {
   Serial.println("CAN Initialized on Arduino Due!");
 
   // initialise dashboard
-  dash_setup();
+  // dash_setup();
 
   // initialise pins to monitor errors
   monitor_pins_setup();
@@ -33,19 +33,21 @@ void loop() {
   // function to read CAN messages and update variables
   read_CAN_data();
 
-  // function to handle APPS and store returned value in torque request var
-  double apps_voltage = get_apps_reading();
+  // // function to handle APPS and store returned value in torque request var
+  // double apps_voltage = get_apps_reading();
 
-  // send torque request + handle implausibility
-  if (apps_voltage >= 0) {
-      send_torque_request(apps_voltage);
-  } else {
-      if (DEBUG_MODE)
-        Serial.println("No torque request sent due to APPS implausibility.");
-  }
+  // // send torque request + handle implausibility
+  // if (apps_voltage >= 0) {
+  //     send_torque_request(apps_voltage);
+  // } else {
+  //     if (DEBUG_MODE)
+  //       Serial.println("No torque request sent due to APPS implausibility.");
+  // }
+
+  send_torque_request(2);
 
   // update dashboard
-  dash_loop();
+  // dash_loop();
 
   // monitor errors
   monitor_pins_loop();

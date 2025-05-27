@@ -1,3 +1,17 @@
+# UCD Formula Student - EV VCU Software Development (Shane Whelan's Fork)
+
+This repository is my primary development fork for the UCD Formula Student team's electric vehicle (EV) Vehicle Control Unit (VCU) software. All ongoing development, including patches and iterative improvements (x.y.Z versions), are committed here. Stable minor version updates (x.Y.z) are then pushed to the team's official repository.
+
+My work on this project focuses on the complete VCU software lifecycle for the Arduino Due platform, including:
+* Designing and implementing robust CAN communication architecture for the Bamocar D3 motor controller and Orion BMS 2.
+* Developing motor control algorithms for the Emrax 208, featuring torque mapping and off-throttle regenerative braking with battery CCL (Charge Current Limit) management.
+* Ensuring compliance with critical FSUK safety rules by coding and validating APPS sensor validation and APPS/Brake plausibility interlocks.
+* Interfacing with various sensors (APPS, brake pressure, MPU6050) and peripherals.
+
+For the official UCD Formula Student team repository, please visit: [https://github.com/UCDFS/ARDUINO](https://github.com/UCDFS/ARDUINO)
+
+---
+
 # UCD Formula Student EV Controller - TODO List
 
 This document summarizes the outstanding tasks, calibration points, and verification steps required for the Arduino Due based EV controller software.

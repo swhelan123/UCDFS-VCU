@@ -22,13 +22,18 @@
 
 // ------------ STANDARD LIBRARIES ------------
 #include <cmath>
-#include <limits>
 #include <stdint.h> // For fixed-width integer types
 
 // ------------ ARDUINO LIBRARIES ------------
 #include <Arduino.h> // Include Arduino core functionality (pinMode, analogRead, etc.)
 #include <SPI.h>  // Required by due_can? Keep if needed.
 #include <Wire.h> // For I2C devices like MPU6050
+
+// Undefine Arduino's min/max macros to avoid conflicts with C++ standard library
+#undef max
+#undef min
+
+#include <limits>
 
 // ------------ EXTERNAL LIBRARIES ------------
 #include <Adafruit_MPU6050.h> // For MPU6050 sensor

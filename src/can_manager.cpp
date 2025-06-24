@@ -63,8 +63,8 @@ bool CANManager::initialize(uint32_t baudrate) {
 // Configure Hardware Filters
 //------------------------------------------------------------------------------
 bool CANManager::setup_filters() {
-  // Disable all mailboxes by default before configuring
-  Can0.disable_all_mailboxes();
+  // Reset all mailboxes by default before configuring
+  Can0.reset_all_mailbox();
 
   /*
    * Filter Configuration Strategy:
@@ -78,24 +78,20 @@ bool CANManager::setup_filters() {
    */
 
   // Example: Mailbox 0 for Bamocar responses (exact ID match)
-  // Mask 0x7FF means all ID bits must match.
+  // Use _setFilterSpecific instead of init_filter
   // TODO: Verify BAMOCAR_TX_ID is correct for your setup
-  if (Can0.init_filter(0, BAMOCAR_TX_ID, CAN_STDID) != 1)
+  if (Can0._setFilterSpecific(0, BAMOCAR_TX_ID, 0x7FF, false) != 1)
     return false; // Filter for Bamocar TX ID
-  // Can0.set_filter_mask(0, 0x7FF, CAN_STDID); // Ensure exact match (often
-  // default)
 
   // Example: Mailbox 1 for BMS Message ID 1 (exact ID match)
   // TODO: Replace ORION_BMS_ID_1 with the actual configured ID
-  if (Can0.init_filter(1, ORION_BMS_ID_1, CAN_STDID) != 1)
+  if (Can0._setFilterSpecific(1, ORION_BMS_ID_1, 0x7FF, false) != 1)
     return false; // Filter for BMS ID 1
-  // Can0.set_filter_mask(1, 0x7FF, CAN_STDID); // Ensure exact match
 
   // Example: Mailbox 2 for BMS Message ID 2 (exact ID match)
   // TODO: Replace ORION_BMS_ID_2 with the actual configured ID
-  if (Can0.init_filter(2, ORION_BMS_ID_2, CAN_STDID) != 1)
+  if (Can0._setFilterSpecific(2, ORION_BMS_ID_2, 0x7FF, false) != 1)
     return false; // Filter for BMS ID 2
-  // Can0.set_filter_mask(2, 0x7FF, CAN_STDID); // Ensure exact match
 
   // --- IMPORTANT ---
   // TODO: Add filters here for ALL BMS message IDs you expect to receive from
@@ -167,6 +163,7 @@ void CANManager::process_incoming_messages() {
 // Send CAN Message
 //------------------------------------------------------------------------------
 bool CANManager::send_message(const CAN_FRAME &frame) {
-  // Use the due_can library function to send the frame
-  return Can0.sendFrame(frame);
+  // Create a non-const copy for the due_can library
+  CAN_FRAME mutable_frame = frame;
+  return Can0.sendFrame(mutable_frame);
 }

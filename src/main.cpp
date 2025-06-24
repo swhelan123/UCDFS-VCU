@@ -17,6 +17,25 @@ extern int brakePressure; // Assuming brake_light.cpp defines and updates this
 
 // Define MPU object if used globally (e.g., for brake light tilt)
 Adafruit_MPU6050 mpu; // Define it here
+bool mpuInitialized = false; // Add this global flag
+
+//------------------------------------------------------------------------------
+// MPU Initialization Function
+//------------------------------------------------------------------------------
+void initializeMPU() {
+  if (!mpu.begin()) {
+    Serial.println("Failed to find MPU6050 sensor!");
+    mpuInitialized = false;
+  } else {
+    if (DEBUG_MODE) {
+      Serial.println("MPU6050 sensor initialized.");
+    }
+    mpuInitialized = true;
+    // Optionally set the sensor range (e.g., higher range if needed for accel/decel)
+    mpu.setAccelerometerRange(MPU6050_RANGE_4_G); // Example: +/- 4G range
+    mpu.setFilterBandwidth(MPU6050_BAND_21_HZ); // Example: Apply some filtering
+  }
+}
 
 //------------------------------------------------------------------------------
 // SETUP FUNCTION

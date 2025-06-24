@@ -28,7 +28,12 @@
 #include "bms_handler.h" // To get BMS status for safety checks
 #include "header.h"
 #include <Arduino.h> // For millis(), PI
+#include <algorithm> // For std::max, std::min
 #include <cmath>     // For std::fabs
+
+// Undefine Arduino's min/max macros to avoid conflicts with std::max/std::min
+#undef max
+#undef min
 
 // Define the global Bamocar instance (used by CANManager and potentially
 // elsewhere)
@@ -209,7 +214,7 @@ void motor_control_update() {
         if (max_motor_torque <= 0)
           max_motor_torque =
               80.0f; // Safety default if function fails/not implemented
-        final_torque_fraction = max(REGEN_DESIRED_TORQUE_FRACTION,
+        final_torque_fraction = std::max(REGEN_DESIRED_TORQUE_FRACTION,
                                     -max_regen_torque_limit / max_motor_torque);
 
         if (DEBUG_MODE >= 2) {

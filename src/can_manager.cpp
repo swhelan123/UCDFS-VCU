@@ -49,8 +49,8 @@ bool CANManager::initialize(uint32_t baudrate) {
     if (DEBUG_MODE) {
       Serial.println("CAN0 Filter Setup Failed!");
     }
-    // Decide if failure to set filters is critical
-    // return false;
+    // Failure to set filters is critical for receiving any messages.
+    return false;
   }
 
   if (DEBUG_MODE) {
@@ -69,44 +69,73 @@ bool CANManager::setup_filters() {
   /*
    * Filter Configuration Strategy:
    * Use specific mailboxes for high-priority messages (like Bamocar responses)
-   * Use other mailboxes with broader masks if needed for BMS or other nodes.
-   * Mailbox 0-7 available on CAN0 for SAM3X.
+   * and BMS data. Mailboxes 0-7 are available on CAN0 for SAM3X.
    * We need to receive:
    * - Bamocar responses (ID: BAMOCAR_TX_ID)
-   * - BMS messages (IDs: ORION_BMS_ID_1, ORION_BMS_ID_2, potentially others)
-   * Add filters for any other nodes as needed.
+   * - BMS messages (IDs: ORION_BMS_ID_1, ORION_BMS_ID_2, etc.)
+   *
+   * Using _setFilterSpecific for exact ID matching. This is generally safer.
+   * The mask 0x7FF ensures we only receive frames with an exact ID match.
+   * The last parameter 'false' specifies a standard (11-bit) CAN ID.
+   * Make sure the CAN IDs in can_manager.h are correct for your devices.
    */
 
-  // Example: Mailbox 0 for Bamocar responses (exact ID match)
-  // Use _setFilterSpecific instead of init_filter
-  // TODO: Verify BAMOCAR_TX_ID is correct for your setup
-  if (Can0._setFilterSpecific(0, BAMOCAR_TX_ID, 0x7FF, false) != 1)
-    return false; // Filter for Bamocar TX ID
+  // Mailbox 0: Bamocar responses (exact ID match)
+  // TODO: Verify BAMOCAR_TX_ID in can_manager.h is correct (0x181 is default).
+  // if (DEBUG_MODE >= 2) {
+  //   Serial.print("Setting filter for mailbox 0, ID: 0x");
+  //   Serial.println(BAMOCAR_TX_ID, HEX);
+  // }
+  int result0 = Can0._setFilterSpecific(0, BAMOCAR_TX_ID, 0x7FF, false);
+  // if (DEBUG_MODE >= 2) {
+  //   Serial.print("_setFilterSpecific(0) returned: ");
+  //   Serial.println(result0);
+  // }
+  // Function might return mailbox number on success (0 for mailbox 0)
+  if (result0 != 0) {
+    // if (DEBUG_MODE >= 2) Serial.println("Failed to set filter for Bamocar TX.");
+    return false;
+  }
 
-  // Example: Mailbox 1 for BMS Message ID 1 (exact ID match)
-  // TODO: Replace ORION_BMS_ID_1 with the actual configured ID
-  if (Can0._setFilterSpecific(1, ORION_BMS_ID_1, 0x7FF, false) != 1)
-    return false; // Filter for BMS ID 1
+  // Mailbox 1: BMS Message ID 1 (exact ID match)
+  // TODO: Verify ORION_BMS_ID_1 in can_manager.h is correct.
+  // if (DEBUG_MODE >= 2) {
+  //   Serial.print("Setting filter for mailbox 1, ID: 0x");
+  //   Serial.println(ORION_BMS_ID_1, HEX);
+  // }
+  int result1 = Can0._setFilterSpecific(1, ORION_BMS_ID_1, 0x7FF, false);
+  // if (DEBUG_MODE >= 2) {
+  //   Serial.print("_setFilterSpecific(1) returned: ");
+  //   Serial.println(result1);
+  // }
+  // Function might return mailbox number on success (1 for mailbox 1)
+  if (result1 != 1) {
+    // if (DEBUG_MODE >= 2) Serial.println("Failed to set filter for BMS ID 1.");
+    return false;
+  }
 
-  // Example: Mailbox 2 for BMS Message ID 2 (exact ID match)
-  // TODO: Replace ORION_BMS_ID_2 with the actual configured ID
-  if (Can0._setFilterSpecific(2, ORION_BMS_ID_2, 0x7FF, false) != 1)
-    return false; // Filter for BMS ID 2
+  // Mailbox 2: BMS Message ID 2 (exact ID match)
+  // TODO: Verify ORION_BMS_ID_2 in can_manager.h is correct.
+  // if (DEBUG_MODE >= 2) {
+  //   Serial.print("Setting filter for mailbox 2, ID: 0x");
+  //   Serial.println(ORION_BMS_ID_2, HEX);
+  // }
+  int result2 = Can0._setFilterSpecific(2, ORION_BMS_ID_2, 0x7FF, false);
+  // if (DEBUG_MODE >= 2) {
+  //   Serial.print("_setFilterSpecific(2) returned: ");
+  //   Serial.println(result2);
+  // }
+  // Function might return mailbox number on success (2 for mailbox 2)
+  if (result2 != 2) {
+    // if (DEBUG_MODE >= 2) Serial.println("Failed to set filter for BMS ID 2.");
+    return false;
+  }
 
   // --- IMPORTANT ---
-  // TODO: Add filters here for ALL BMS message IDs you expect to receive from
-  // your Orion BMS. If there are many BMS messages, you might use a mask to
-  // accept a range, but specific filters are generally better if feasible.
-  // Example Mask for a range (e.g., 0x420 to 0x42F):
-  // int mailbox_index = 3; // Use next available mailbox
-  // uint32_t id_base = 0x420;
-  // uint32_t mask = 0x7F0; // Match upper bits, ignore lower 4 bits
-  // if (Can0.init_filter(mailbox_index, id_base, CAN_STDID) != 1) return false;
-  // if (Can0.set_filter_mask(mailbox_index, mask, CAN_STDID) != 1) return
-  // false;
-  // --- --- --- --- ---
-
-  // Add filters for other devices as needed...
+  // If you have more BMS messages to receive, add more filters here.
+  // Example for another mailbox:
+  // if (Can0._setFilterSpecific(3, ANOTHER_BMS_ID, 0x7FF, false) != 0) return false;
+  // --- --- --- ---
 
   return true; // Indicate success
 }
@@ -144,16 +173,24 @@ void CANManager::process_incoming_messages() {
 
       default:
         // Handle unexpected but filtered messages if necessary
-        if (DEBUG_MODE) {
-          Serial.print("CANManager: Received unexpected filtered ID: 0x");
-          Serial.println(incoming_frame.id, HEX);
+        // Show ALL incoming messages during testing
+        Serial.print("RX: ID=0x");
+        Serial.print(incoming_frame.id, HEX);
+        Serial.print(" Len=");
+        Serial.print(incoming_frame.length);
+        Serial.print(" Data=[");
+        for (int i = 0; i < incoming_frame.length; i++) {
+          if (i > 0) Serial.print(",");
+          Serial.print("0x");
+          if (incoming_frame.data.bytes[i] < 16) Serial.print("0");
+          Serial.print(incoming_frame.data.bytes[i], HEX);
         }
+        Serial.println("]");
         break;
       }
     } else {
-      if (DEBUG_MODE) {
-        Serial.println(
-            "CANManager: Can0.available() > 0 but Can0.read() failed.");
+      if (DEBUG_MODE >= 2) {
+        Serial.println("CAN: Available but read failed");
       }
     }
   }
@@ -165,5 +202,41 @@ void CANManager::process_incoming_messages() {
 bool CANManager::send_message(const CAN_FRAME &frame) {
   // Create a non-const copy for the due_can library
   CAN_FRAME mutable_frame = frame;
-  return Can0.sendFrame(mutable_frame);
+  
+  // Reduce debug verbosity to prevent output spam
+  if (DEBUG_MODE >= 4) {  // Only show at maximum debug level
+    Serial.print("CANManager: Attempting to send frame ID: 0x");
+    Serial.print(frame.id, HEX);
+    Serial.print(", Length: ");
+    Serial.println(frame.length);
+  }
+  
+  bool result = Can0.sendFrame(mutable_frame);
+  
+  // Only show send result at maximum debug level to reduce output spam
+  if (DEBUG_MODE >= 4) {
+    Serial.print("CANManager: sendFrame() returned: ");
+    Serial.println(result ? "SUCCESS" : "FAILED");
+  }
+  
+  // If send fails consistently, try to recover CAN bus
+  static int consecutive_failures = 0;
+  static unsigned long last_recovery_attempt = 0;
+  if (!result) {
+    consecutive_failures++;
+    if (consecutive_failures >= 20 && millis() - last_recovery_attempt > 5000) { // Increased threshold and time delay
+      if (DEBUG_MODE) {
+        Serial.println("CAN: Bus recovery attempt");
+      }
+      // Reset CAN controller to recover from bus-off state
+      Can0.reset_all_mailbox();
+      setup_filters(); // Re-setup filters after reset
+      consecutive_failures = 0;
+      last_recovery_attempt = millis();
+    }
+  } else {
+    consecutive_failures = 0; // Reset counter on success
+  }
+  
+  return result;
 }

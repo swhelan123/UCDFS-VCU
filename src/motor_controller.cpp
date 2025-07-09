@@ -70,6 +70,7 @@ void motor_control_update() {
   bool send_zero_torque =
       false; // Flag to force sending zero torque due to faults
   float final_torque_fraction = 0.0f; // Final command (-1.0 to 1.0)
+  const BMSData &bms_data = bms_handler.get_bms_data();
 
   // --- 1. Read APPS Sensor ---
   torque_request_percent = get_apps_reading();
@@ -148,17 +149,27 @@ void motor_control_update() {
   }
 
   // --- 4. Check BMS Status (Rule EV5.8) ---
-  const BMSData &bms_data = bms_handler.get_bms_data();
-  // TODO: Ensure bms_handler.has_critical_fault() is correctly implemented
-  if (!send_zero_torque && (bms_handler.has_critical_fault() ||
-                            !bms_handler.is_communication_active())) {
-    send_zero_torque = true;
+  if (!BENCH_TESTING_MODE) { // Only perform BMS checks if not in bench testing mode
+    // TODO: Ensure bms_handler.has_critical_fault() is correctly implemented
+    if (!send_zero_torque && (bms_handler.has_critical_fault() ||
+                              !bms_handler.is_communication_active())) {
+      send_zero_torque = true;
+      if (DEBUG_MODE) {
+        if (bms_handler.has_critical_fault())
+          Serial.println(
+              "MOTOR CTRL: BMS Critical Fault Detected - Zero Torque.");
+        if (!bms_handler.is_communication_active(1000))
+          Serial.println("MOTOR CTRL: BMS Communication Lost - Zero Torque.");
+      }
+    }
+  } else {
+    // In bench testing mode, print a periodic reminder that the check is skipped
     if (DEBUG_MODE) {
-      if (bms_handler.has_critical_fault())
-        Serial.println(
-            "MOTOR CTRL: BMS Critical Fault Detected - Zero Torque.");
-      if (!bms_handler.is_communication_active(1000))
-        Serial.println("MOTOR CTRL: BMS Communication Lost - Zero Torque.");
+        static unsigned long last_bms_skip_print = 0;
+        if (millis() - last_bms_skip_print > 2000) { // Print every 2 seconds
+            Serial.println("MOTOR CTRL: BMS check skipped (BENCH_TESTING_MODE).");
+            last_bms_skip_print = millis();
+        }
     }
   }
 
@@ -183,69 +194,72 @@ void motor_control_update() {
     final_torque_fraction = 0.0f;
   } else if (torque_request_percent < APPS_REGEN_THRESHOLD) {
     // --- Off-Throttle Regen Logic ---
-    float motor_speed_rpm = bamocar.getSpeed(); // Get speed in RPM
+    if (!BENCH_TESTING_MODE) {
+        float motor_speed_rpm = bamocar.getSpeed(); // Get speed in RPM
 
-    // Only apply regen if speed is sufficient and no faults active
-    if (motor_speed_rpm > MIN_SPEED_FOR_REGEN_RPM) {
-      // Get Limits from BMS
-      float current_ccl = bms_data.charge_current_limit; // Amps
-      float pack_voltage = bms_data.pack_voltage;        // Volts
+        // Only apply regen if speed is sufficient and no faults active
+        if (motor_speed_rpm > MIN_SPEED_FOR_REGEN_RPM) {
+          // Get Limits from BMS
+          float current_ccl = bms_data.charge_current_limit; // Amps
+          float pack_voltage = bms_data.pack_voltage;        // Volts
 
-      // Basic check for valid BMS data
-      if (current_ccl > 0 && pack_voltage > 0) {
-        // Calculate Max Regen Power based on CCL
-        float max_regen_power = current_ccl * pack_voltage; // Watts
+          // Basic check for valid BMS data
+          if (current_ccl > 0 && pack_voltage > 0) {
+            // Calculate Max Regen Power based on CCL
+            float max_regen_power = current_ccl * pack_voltage; // Watts
 
-        // Calculate Max Regen Torque based on Power and Speed
-        // Power = Torque (Nm) * Speed (rad/s)
-        // TODO: Verify this conversion factor if needed
-        float motor_speed_rad_s = motor_speed_rpm * (2.0f * PI / 60.0f);
-        float max_regen_torque_limit = 0.0f;
-        if (std::fabs(motor_speed_rad_s) >
-            0.1f) { // Avoid division by zero/tiny numbers
-          max_regen_torque_limit =
-              max_regen_power / std::fabs(motor_speed_rad_s);
+            // Calculate Max Regen Torque based on Power and Speed
+            // Power = Torque (Nm) * Speed (rad/s)
+            // TODO: Verify this conversion factor if needed
+            float motor_speed_rad_s = motor_speed_rpm * (2.0f * PI / 60.0f);
+            float max_regen_torque_limit = 0.0f;
+            if (std::fabs(motor_speed_rad_s) >
+                0.1f) { // Avoid division by zero/tiny numbers
+              max_regen_torque_limit =
+                  max_regen_power / std::fabs(motor_speed_rad_s);
+            }
+
+            // Limit the desired regen torque by the calculated max allowed torque
+            // Ensure final torque is negative or zero
+            // TODO: Implement/Verify bamocar.getMaxTorqueNm() or use constant
+            float max_motor_torque = bamocar.getMaxTorqueNm();
+            if (max_motor_torque <= 0)
+              max_motor_torque =
+                  80.0f; // Safety default if function fails/not implemented
+            final_torque_fraction = std::max(REGEN_DESIRED_TORQUE_FRACTION,
+                                        -max_regen_torque_limit / max_motor_torque);
+
+            if (DEBUG_MODE >= 4) {
+              Serial.print("Regen Calc: Desired=");
+              Serial.print(REGEN_DESIRED_TORQUE_FRACTION);
+              Serial.print(", CCL=");
+              Serial.print(current_ccl);
+              Serial.print(", Vpack=");
+              Serial.print(pack_voltage);
+              Serial.print(", RPM=");
+              Serial.print(motor_speed_rpm);
+              Serial.print(", MaxP=");
+              Serial.print(max_regen_power);
+              Serial.print(", MaxT_Nm=");
+              Serial.print(max_regen_torque_limit);
+              Serial.print(", FinalT_Frac=");
+              Serial.println(final_torque_fraction);
+            }
+
+          } else {
+            // Invalid BMS data for calculation, default to zero regen
+            final_torque_fraction = 0.0f;
+            if (DEBUG_MODE >= 2)
+              Serial.println("MOTOR CTRL: Regen skipped - Invalid BMS CCL/Voltage data.");
+          }
+        } else {
+          // Speed too low for regen
+          final_torque_fraction = 0.0f;
+          if (DEBUG_MODE >= 3)
+            Serial.println("MOTOR CTRL: Regen skipped - Speed too low.");
         }
-
-        // Limit the desired regen torque by the calculated max allowed torque
-        // Ensure final torque is negative or zero
-        // TODO: Implement/Verify bamocar.getMaxTorqueNm() or use constant
-        float max_motor_torque = bamocar.getMaxTorqueNm();
-        if (max_motor_torque <= 0)
-          max_motor_torque =
-              80.0f; // Safety default if function fails/not implemented
-        final_torque_fraction = std::max(REGEN_DESIRED_TORQUE_FRACTION,
-                                    -max_regen_torque_limit / max_motor_torque);
-
-        if (DEBUG_MODE >= 2) {
-          Serial.print("Regen Calc: Desired=");
-          Serial.print(REGEN_DESIRED_TORQUE_FRACTION);
-          Serial.print(", CCL=");
-          Serial.print(current_ccl);
-          Serial.print(", Vpack=");
-          Serial.print(pack_voltage);
-          Serial.print(", RPM=");
-          Serial.print(motor_speed_rpm);
-          Serial.print(", MaxP=");
-          Serial.print(max_regen_power);
-          Serial.print(", MaxT_Nm=");
-          Serial.print(max_regen_torque_limit);
-          Serial.print(", FinalT_Frac=");
-          Serial.println(final_torque_fraction);
-        }
-
-      } else {
-        // Invalid BMS data for calculation, default to zero regen
-        final_torque_fraction = 0.0f;
-        if (DEBUG_MODE)
-          Serial.println(
-              "MOTOR CTRL: Regen skipped - Invalid BMS CCL/Voltage data.");
-      }
     } else {
-      // Speed too low for regen
-      final_torque_fraction = 0.0f;
-      if (DEBUG_MODE >= 2)
-        Serial.println("MOTOR CTRL: Regen skipped - Speed too low.");
+        final_torque_fraction = 0.0f; // No regen in bench testing mode
     }
 
   } else {
@@ -261,16 +275,20 @@ void motor_control_update() {
 
   // --- 7. Send Torque Command to Bamocar ---
   if (!bamocar.setTorque(final_torque_fraction)) {
-    if (DEBUG_MODE) {
+    if (DEBUG_MODE >= 3) {  // Reduced verbosity to prevent spam
       Serial.println(
           "MOTOR CTRL: Failed to send torque command via CANManager.");
     }
   }
 
-  if (DEBUG_MODE) {
-    Serial.print("MOTOR CTRL: Final Torque Command: ");
-    Serial.print(final_torque_fraction * 100.0, 1);
-    Serial.println("%");
+  if (DEBUG_MODE >= 3) {
+    static unsigned long last_torque_print = 0;
+    if (millis() - last_torque_print > 1000) { // Print torque command less frequently
+      Serial.print("MOTOR CTRL: Final Torque Command: ");
+      Serial.print(final_torque_fraction * 100.0, 1);
+      Serial.println("%");
+      last_torque_print = millis();
+    }
   }
 
   // --- 8. Request Feedback from Bamocar (Periodic) ---

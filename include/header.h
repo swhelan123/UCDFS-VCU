@@ -50,7 +50,11 @@
 
 // ------------ CONSTANTS ------------
 // --- General ---
-const int DEBUG_MODE = 1; // 0=Off, 1=On: Enables Serial print messages
+const int DEBUG_MODE = 0; // 0=Off (Clean output for testing), 1=Essential, 2=Verbose, 3=Very Verbose, 4=Max Debug
+
+// VCU-HACK: Set to true to bypass BMS checks for bench testing without a BMS.
+// MUST BE FALSE FOR VEHICLE OPERATION.
+const bool BENCH_TESTING_MODE = true;
 
 // --- Pins ---
 // Analog Pins
@@ -102,15 +106,13 @@ extern Adafruit_MPU6050 mpu; // If MPU6050 is used globally
 // of BMSHandler class
 
 // --- Sensor/Input Modules ---
-double
-get_apps_reading(); // Returns pedal position (%) or -1.0 on implausibility
+double get_apps_reading(); // Returns pedal position (%) or -1.0 on implausibility
 void brake_light(); // Reads brake pressure, MPU, controls brake light
 
 // --- Actuator/Control Modules ---
 void motor_control_update(); // New function to handle motor control logic
                              // including safety checks
-// void send_torque_request(double torqueRequest); // Integrated into
-// motor_control_update
+
 
 // --- Monitoring/Dashboard Modules ---
 void monitor_errors_setup(); // Renamed from monitor_pins_setup
@@ -119,6 +121,6 @@ void dash_setup();           // Setup for Nextion display (if used)
 void dash_loop();            // Update loop for Nextion display (if used)
 
 // --- Utility Functions ---
-// Add any other helper function prototypes here
+void initializeMPU(); // Initialize MPU6050 sensor
 
 #endif // HEADER_H

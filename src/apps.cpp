@@ -89,21 +89,25 @@ double get_apps_reading() {
   // 4. Return the average percentage if plausible
   double average_percent = (apps_1_percent + apps_2_percent) / 2.0;
 
-  if (DEBUG_MODE >= 2) { // Add higher debug level if needed
-    Serial.print("APPS Readings - Raw: ");
-    Serial.print(apps_1_raw);
-    Serial.print(", ");
-    Serial.print(apps_2_raw);
-    Serial.print(" | Volts: ");
-    Serial.print(apps_1_voltage, 3);
-    Serial.print(", ");
-    Serial.print(apps_2_voltage, 3);
-    Serial.print(" | Percent: ");
-    Serial.print(apps_1_percent, 1);
-    Serial.print(", ");
-    Serial.print(apps_2_percent, 1);
-    Serial.print(" | Avg: ");
-    Serial.println(average_percent, 1);
+  if (DEBUG_MODE >= 4) { // Increase debug level to reduce spam
+    static unsigned long last_apps_print = 0;
+    if (millis() - last_apps_print > 1000) { // Print APPS readings less frequently
+      Serial.print("APPS Readings - Raw: ");
+      Serial.print(apps_1_raw);
+      Serial.print(", ");
+      Serial.print(apps_2_raw);
+      Serial.print(" | Volts: ");
+      Serial.print(apps_1_voltage, 3);
+      Serial.print(", ");
+      Serial.print(apps_2_voltage, 3);
+      Serial.print(" | Percent: ");
+      Serial.print(apps_1_percent, 1);
+      Serial.print(", ");
+      Serial.print(apps_2_percent, 1);
+      Serial.print(" | Avg: ");
+      Serial.println(average_percent, 1);
+      last_apps_print = millis();
+    }
   }
 
   return average_percent;

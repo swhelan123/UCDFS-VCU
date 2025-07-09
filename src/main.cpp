@@ -1,11 +1,13 @@
-/**
- * @file main.cpp
+/*
+ * @file main.cpp - COMMENTED OUT FOR TESTING
  * @brief Main application file for the UCD Formula Student EV Controller.
  * Initializes hardware and runs the main control loop.
  * Modified to use CANManager and new control structure.
  * @author Shane Whelan (UCD Formula Student)
  * @date 2025-04-27
- */
+ *
+ * NOTE: This entire file is commented out to allow testing with main_test.cpp
+ * To use this file again, uncomment the entire content and comment out main_test.cpp
 
 #include "bamocar-due.h"
 #include "bms_handler.h"
@@ -18,24 +20,6 @@ extern int brakePressure; // Assuming brake_light.cpp defines and updates this
 // Define MPU object if used globally (e.g., for brake light tilt)
 Adafruit_MPU6050 mpu; // Define it here
 bool mpuInitialized = false; // Add this global flag
-
-//------------------------------------------------------------------------------
-// MPU Initialization Function
-//------------------------------------------------------------------------------
-void initializeMPU() {
-  if (!mpu.begin()) {
-    Serial.println("Failed to find MPU6050 sensor!");
-    mpuInitialized = false;
-  } else {
-    if (DEBUG_MODE) {
-      Serial.println("MPU6050 sensor initialized.");
-    }
-    mpuInitialized = true;
-    // Optionally set the sensor range (e.g., higher range if needed for accel/decel)
-    mpu.setAccelerometerRange(MPU6050_RANGE_4_G); // Example: +/- 4G range
-    mpu.setFilterBandwidth(MPU6050_BAND_21_HZ); // Example: Apply some filtering
-  }
-}
 
 //------------------------------------------------------------------------------
 // SETUP FUNCTION
@@ -72,7 +56,6 @@ void setup() {
   // It's better to initialize here than in the loop function.
   // Assuming brake_light.cpp has initializeMPU() made accessible or defined
   // here
-  initializeMPU(); // Call the MPU init function
 
   // --- Initialize Dashboard (Optional) ---
   // dash_setup(); // Uncomment if using Nextion display
@@ -107,7 +90,9 @@ void loop() {
   // Reads APPS, performs safety checks (APPS plausibility, APPS/Brake, BMS
   // status), determines final torque command, and sends it via CANManager. Also
   // handles periodic CAN requests (status, temp) to Bamocar.
-  motor_control_update();
+  // motor_control_update();
+
+  motor_control_update(); // Main control logic for motor torque command
 
   // --- 4. Update Dashboard (Optional) ---
   // dash_loop(); // Uncomment if using Nextion display
@@ -115,26 +100,21 @@ void loop() {
   // --- 5. Debug Output ---
   if (DEBUG_MODE >= 3) { // Example: Higher debug level for less frequent output
     static unsigned long last_debug_print = 0;
-    if (millis() - last_debug_print > 1000) { // Print status every second
-      Serial.println("--- Loop Status ---");
-      // Print key variables like APPS %, Brake Pressure, BMS SoC, Bamocar
-      // Status etc.
+    if (millis() - last_debug_print > 1000) { // Print status every 1000ms (reduced frequency)
+      // Static output without ANSI escape codes for stable serial monitor display
       const BMSData &bms_data = bms_handler.get_bms_data();
-      Serial.print("  BMS SoC: ");
+      Serial.print("[STATUS] BMS: ");
+      Serial.print(bms_data.pack_voltage, 1);
+      Serial.print("V, ");
       Serial.print(bms_data.pack_soc);
-      Serial.println("%");
-      Serial.print("  BMS Voltage: ");
-      Serial.print(bms_data.pack_voltage);
-      Serial.println(" V");
-      Serial.print("  BMS Fault: ");
-      Serial.println(bms_handler.has_critical_fault() ? "YES" : "NO");
-      Serial.print("  Brake Pressure (Raw): ");
-      Serial.println(brakePressure);
-      Serial.print("  Bamocar Status: 0x");
+      Serial.print("%, Fault:");
+      Serial.print(bms_handler.has_critical_fault() ? "YES" : "NO");
+      Serial.print(" | Brake:");
+      Serial.print(brakePressure);
+      Serial.print(" | Bamocar:0x");
       Serial.println(bamocar.getStatus(), HEX);
-      // Add more debug info...
+
       last_debug_print = millis();
-      Serial.println("------------------");
     }
   }
 
@@ -146,3 +126,4 @@ void loop() {
   // if needed, but generally avoid blocking delays.
 
 } // End of loop()
+*/

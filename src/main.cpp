@@ -8,6 +8,7 @@
  *
  * NOTE: This entire file is commented out to allow testing with main_test.cpp
  * To use this file again, uncomment the entire content and comment out main_test.cpp
+ */
 
 #include "bamocar-due.h"
 #include "bms_handler.h"
@@ -45,25 +46,22 @@ void setup() {
 
   // --- Initialize CAN Communication ---
   // CANManager handles CAN0.begin() and filter setup
-  if (!can_manager.initialize(CAN_BPS_500K)) {
-    Serial.println("FATAL: CAN Initialization failed! Halting.");
-    while (1)
-      ; // Halt execution
-  }
+  // if (!can_manager.initialize(CAN_BPS_500K)) {
+  //   Serial.println("FATAL: CAN Initialization failed! Halting.");
+  //   while (1)
+  //     ; // Halt execution
+  // }
 
   // --- Initialize Sensors ---
-  // Initialize MPU6050 (if used, e.g., in brake_light.cpp)
-  // It's better to initialize here than in the loop function.
-  // Assuming brake_light.cpp has initializeMPU() made accessible or defined
-  // here
+  bool mpuInitialized = initializeMPU();
 
-  // --- Initialize Dashboard (Optional) ---
-  // dash_setup(); // Uncomment if using Nextion display
+  // --- Initialize Dashboard ---
+  // dash_setup(); 
 
   // --- Initial Requests for Device Status (Optional) ---
   // Request initial status from Bamocar and BMS if needed at startup
   // Note: Periodic requests are handled in motor_control_update()
-  bamocar.requestStatus(INTVL_IMMEDIATE);
+  // bamocar.requestStatus(INTVL_IMMEDIATE);
   // Add BMS initial requests if applicable/needed
 
   if (DEBUG_MODE) {
@@ -77,7 +75,7 @@ void setup() {
 void loop() {
   // --- 1. Process Incoming CAN Messages ---
   // Reads messages from CAN buffer and dispatches to handlers (BMS, Bamocar)
-  can_manager.process_incoming_messages();
+  // can_manager.process_incoming_messages();
 
   // --- 2. Read Sensors & Update Local States ---
   // Reads brake pressure ADC, MPU6050 (if used), updates brake light state
@@ -91,8 +89,9 @@ void loop() {
   // status), determines final torque command, and sends it via CANManager. Also
   // handles periodic CAN requests (status, temp) to Bamocar.
   // motor_control_update();
+  get_apps_reading(); // Reads APPS sensor and updates global variable
 
-  motor_control_update(); // Main control logic for motor torque command
+  // motor_control_update(); // Main control logic for motor torque command
 
   // --- 4. Update Dashboard (Optional) ---
   // dash_loop(); // Uncomment if using Nextion display
@@ -109,10 +108,16 @@ void loop() {
       Serial.print(bms_data.pack_soc);
       Serial.print("%, Fault:");
       Serial.print(bms_handler.has_critical_fault() ? "YES" : "NO");
-      Serial.print(" | Brake:");
-      Serial.print(brakePressure);
+      Serial.print(" | Rear Brake:");
+      Serial.print(brakePressureRear);
+            Serial.print(" | Front Brake:");
+      Serial.print(brakePressureFront);
       Serial.print(" | Bamocar:0x");
-      Serial.println(bamocar.getStatus(), HEX);
+      Serial.print(bamocar.getStatus(), HEX);
+      Serial.print(" | Brake Light: ");
+      Serial.print(digitalRead(BRAKE_LIGHT_PIN) ? "ON" : "OFF");
+      Serial.print(" | APPS: ");
+      Serial.println(get_apps_reading());
 
       last_debug_print = millis();
     }
@@ -126,4 +131,4 @@ void loop() {
   // if needed, but generally avoid blocking delays.
 
 } // End of loop()
-*/
+

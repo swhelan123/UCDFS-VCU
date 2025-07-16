@@ -103,7 +103,7 @@ void motor_control_update() {
   }
 
   // --- 3. APPS / Brake Plausibility Check (Rule EV.2.3.1 / EV.5.7) ---
-  bool brake_active = (brakePressure > BRAKE_LIGHT_THRESHOLD);
+  bool brake_active = (brakePressureFront > BRAKE_LIGHT_THRESHOLD);
   // Use plausible APPS value for this check, default to 0 if implausible but
   // not yet timed out
   double apps_for_brake_check =

@@ -23,7 +23,9 @@
 #include "header.h"
 
 // Global variable for brake pressure (raw ADC) - updated here
-int brakePressure = 0;
+int brakePressureFront = 0;
+int brakePressureRear = 0; 
+int brakePressureCombined = 0;
 
 // Global MPU object (assuming it's declared extern in header.h and defined in
 // main.cpp)
@@ -39,22 +41,18 @@ extern bool mpuInitialized; // Make this extern if defined/set in main.cpp after
 // TODO: Move this function's implementation and call to setup() in main.cpp
 // Keep declaration here if needed by other functions in this file, or make
 // static if only used here.
-void initializeMPU() {
+bool initializeMPU() {
   if (!mpu.begin()) {
     Serial.println("Failed to find MPU6050 sensor!");
-    // Avoid infinite loop in production code; set an error flag or retry
-    // mechanism while (1) { delay(10); } // Halt is bad during operation
-    // mpuInitialized = false; // Set by main.cpp
+    return false; // Return false if initialization fails
   } else {
     if (DEBUG_MODE) {
       Serial.println("MPU6050 sensor initialized.");
     }
-    // mpuInitialized = true; // Set by main.cpp
-    // Optionally set the sensor range (e.g., higher range if needed for
-    // accel/decel)
     mpu.setAccelerometerRange(MPU6050_RANGE_4_G); // Example: +/- 4G range
     mpu.setFilterBandwidth(MPU6050_BAND_21_HZ); // Example: Apply some filtering
   }
+  return true; // Return true if initialization succeeds
 }
 
 //------------------------------------------------------------------------------
@@ -62,20 +60,10 @@ void initializeMPU() {
 //------------------------------------------------------------------------------
 void brake_light() {
   // Read brake pressure from the sensor
-  brakePressure = analogRead(BRAKE_PRESSURE_SENSOR_PIN);
-  if (DEBUG_MODE >= 2) { // Reduce frequency of this print
-    static unsigned long lastPrint = 0;
-    if (millis() - lastPrint > 500) {
-      Serial.print("Brake Pressure (Raw): ");
-      Serial.println(brakePressure);
-      lastPrint = millis();
-    }
-  }
+  brakePressureRear = analogRead(BRAKE_PRESSURE_SENSOR_PIN_REAR);
+  brakePressureFront = analogRead(BRAKE_PRESSURE_SENSOR_PIN_FRONT);
+  brakePressureCombined = (brakePressureFront + brakePressureRear) / 2;
 
-  // TODO: Remove this check if initializeMPU() is reliably called in setup()
-  // if (!mpuInitialized) {
-  //   initializeMPU(); // Initialization should happen in setup()
-  // }
 
   float deceleration_m_s2 = 0.0f;
   float tiltAngle =
@@ -120,7 +108,7 @@ void brake_light() {
   bool activate_brake_light = false;
 
   // Condition 1: Hydraulic pressure threshold (Rule T6.3.1)
-  if (brakePressure > BRAKE_LIGHT_THRESHOLD) {
+  if (brakePressureFront > BRAKE_LIGHT_THRESHOLD) {
     activate_brake_light = true;
   }
 
@@ -156,7 +144,7 @@ void brake_light() {
     // deceleration is below threshold AND tilt is below threshold (if used)
     // TODO: Add hysteresis for deceleration condition if implemented
     bool turn_off =
-        brakePressure < (BRAKE_LIGHT_THRESHOLD - BRAKE_LIGHT_HYSTERESIS);
+        brakePressureFront < (BRAKE_LIGHT_THRESHOLD - BRAKE_LIGHT_HYSTERESIS);
     // if (deceleration_m_s2 >= REGEN_DECEL_THRESHOLD * 0.8f) turn_off = false;
     // // Example hysteresis if (tiltAngle >= (TILT_THRESHOLD_DEG - 1.0f))
     // turn_off = false; // Example hysteresis
@@ -164,9 +152,8 @@ void brake_light() {
     if (brake_light_on && turn_off) {
       digitalWrite(BRAKE_LIGHT_PIN, LOW);
       brake_light_on = false;
-      if (DEBUG_MODE)
-        Serial.println("Brake Light OFF");
-    }
     // If already off, do nothing. If hysteresis conditions not met, keep it on.
+  }
+
   }
 }

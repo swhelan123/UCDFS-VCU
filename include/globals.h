@@ -11,14 +11,13 @@
 
 // ------------ GLOBAL VARS ------------
 
-// Keep brakePressure if it's read directly via analogRead and used globally
-// If brake pressure reading moves into a dedicated module, remove this too.
-extern int brakePressure; // Raw ADC value from brake pressure sensor
-
-// Removed extern float cellVoltage; -> Now accessed via
-// bms_handler.get_bms_data().low_cell_voltage etc. Removed extern int
-// stateOfCharge; -> Now accessed via bms_handler.get_bms_data().pack_soc
-
-// Add other necessary global variables here
+extern int brakePressureFront;
+extern int brakePressureRear; 
+extern int brakePressureCombined;
+extern int vehicleSpeed;
+extern int motorRPM;
+extern float batteryVoltage;
+extern int motorTemperature;
+extern bool mpuInitialized; 
 
 #endif // GLOBALS_H

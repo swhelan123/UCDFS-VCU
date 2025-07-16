@@ -50,7 +50,7 @@
 
 // ------------ CONSTANTS ------------
 // --- General ---
-const int DEBUG_MODE = 0; // 0=Off (Clean output for testing), 1=Essential, 2=Verbose, 3=Very Verbose, 4=Max Debug
+const int DEBUG_MODE = 4; // 0=Off (Clean output for testing), 1=Essential, 2=Verbose, 3=Very Verbose, 4=Max Debug
 
 // VCU-HACK: Set to true to bypass BMS checks for bench testing without a BMS.
 // MUST BE FALSE FOR VEHICLE OPERATION.
@@ -58,7 +58,8 @@ const bool BENCH_TESTING_MODE = true;
 
 // --- Pins ---
 // Analog Pins
-const int BRAKE_PRESSURE_SENSOR_PIN = A0;
+const int BRAKE_PRESSURE_SENSOR_PIN_FRONT = A0;
+const int BRAKE_PRESSURE_SENSOR_PIN_REAR = A1;
 const int APPS_1_PIN = A6;
 const int APPS_2_PIN = A7;
 // Digital Pins
@@ -72,8 +73,8 @@ const int ERROR_PIN_END = 37;   // Example end pin for error monitoring
 // --- Thresholds & Parameters ---
 // Brake System
 // TODO: Calibrate these thresholds based on sensor readings
-const int BRAKE_LIGHT_THRESHOLD = 500; // Raw ADC value - Calibrate!
-const int BRAKE_LIGHT_HYSTERESIS = 15; // Raw ADC value - Calibrate!
+const int BRAKE_LIGHT_THRESHOLD = 109; // Calibrated
+const int BRAKE_LIGHT_HYSTERESIS = 2; // Calibrated
 // TODO: Verify necessity/logic/value for tilt activation
 const float TILT_THRESHOLD_DEG = 5.8; // For MPU6050 brake light activation -
                                       // Verify necessity/logic (Rule T6.3.1)
@@ -121,6 +122,6 @@ void dash_setup();           // Setup for Nextion display (if used)
 void dash_loop();            // Update loop for Nextion display (if used)
 
 // --- Utility Functions ---
-void initializeMPU(); // Initialize MPU6050 sensor
+bool initializeMPU(); // Initialize MPU6050 sensor
 
 #endif // HEADER_H

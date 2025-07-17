@@ -68,11 +68,8 @@ const int ERROR_PIN_END = 37;   // End pin for error monitoring
 // Brake System
 const int BRAKE_LIGHT_THRESHOLD = 109; // Calibrated
 const int BRAKE_LIGHT_HYSTERESIS = 2; // Calibrated
-// TODO: Verify necessity/logic/value for tilt activation
-const float TILT_THRESHOLD_DEG = 5.8; // For MPU6050 brake light activation -
-                                      // Verify necessity/logic (Rule T6.3.1)
-const int APPS_BRAKE_PLAUSIBILITY_THRESHOLD =
-    25; // % APPS request threshold for brake plausibility check (Rule EV.5.7)
+const float TILT_THRESHOLD_DEG = 5.8; // For MPU6050 brake light activation
+const int APPS_BRAKE_PLAUSIBILITY_THRESHOLD = 25; // % APPS request threshold for brake plausibility check (Rule EV.5.7)
 
 // APPS
 const float APPS_PLAUSIBILITY_THRESHOLD = 10.0f; // % difference threshold (Rule EV.5.6)
@@ -115,6 +112,8 @@ void monitor_errors_setup(); // Setup error monitoring
 void monitor_errors_loop();  // Error monitoring loop
 void dash_setup();           // Setup for Nextion display
 void dash_loop();            // Update loop for Nextion display
+void checkCriticalSystems(); // Check critical systems and update warnings
+const char* getErrorString(int errorCode); // Get error string from error code
 
 // --- Utility Functions ---
 bool initializeMPU(); // Initialize MPU6050 sensor

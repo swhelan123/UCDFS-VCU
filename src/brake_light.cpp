@@ -74,19 +74,19 @@ void brake_light() {
 
     if (DEBUG_MODE >= 2) {
       static unsigned long lastMPUPrint = 0;
-      if (millis() - lastMPUPrint > 500) {
-        Serial.print("MPU Accel X: ");
-        Serial.print(a.acceleration.x, 2);
-        Serial.print(" m/s^2 -> Decel: ");
-        Serial.print(deceleration_m_s2, 2);
-        Serial.println(" m/s^2");
-        lastMPUPrint = millis();
-      }
+      // if (millis() - lastMPUPrint > 500) {
+      //   Serial.print("MPU Accel X: ");
+      //   Serial.print(a.acceleration.x, 2);
+      //   Serial.print(" m/s^2 -> Decel: ");
+      //   Serial.print(deceleration_m_s2, 2);
+      //   Serial.println(" m/s^2");
+      //   lastMPUPrint = millis();
+      // }
     }
   }
 
   // Debug output for brake pressure readings
-  if (DEBUG_MODE >= 3) {
+  if (DEBUG_MODE >= 6) {
     static unsigned long lastBrakePrint = 0;
     if (millis() - lastBrakePrint > 1000) {
       Serial.print("Brake - Front: ");
@@ -118,16 +118,17 @@ void brake_light() {
   const float REGEN_DECEL_THRESHOLD = 1.0f; // m/s^2
   if (deceleration_m_s2 > REGEN_DECEL_THRESHOLD) {
     activate_brake_light = true;
-    if (DEBUG_MODE >= 2)
-      Serial.println("Brake Light ON (Regen Decel)");
+  //   if (DEBUG_MODE >= 2)
+  //     Serial.println("Brake Light ON (Regen Decel)");
+  // 
   }
 
   // Apply hysteresis for turning the light OFF
   static bool brake_light_on = false;
   if (activate_brake_light) {
     if (!brake_light_on) {
-      if (DEBUG_MODE)
-        Serial.println("Brake Light ON");
+      // if (DEBUG_MODE)
+      //   Serial.println("Brake Light ON");
     }
     digitalWrite(BRAKE_LIGHT_PIN, HIGH);
     brake_light_on = true;
@@ -137,8 +138,8 @@ void brake_light() {
     if (brake_light_on && turn_off) {
       digitalWrite(BRAKE_LIGHT_PIN, LOW);
       brake_light_on = false;
-      if (DEBUG_MODE)
-        Serial.println("Brake Light OFF");
+      // if (DEBUG_MODE)
+      //   Serial.println("Brake Light OFF");
     }
   }
 }

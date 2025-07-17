@@ -8,6 +8,7 @@
 
 #include <due_can.h>
 #include <Arduino.h>
+#include "header.h"
 
 // CAN ID definitions
 // Bamocar D3 default IDs
@@ -80,7 +81,7 @@ public:
   }
   
 private:
-  uint8_t debugLevel = 2; // 0=None, 1=Errors, 2=Basic, 3=Verbose
+  uint8_t debugLevel = 0; // 0=None, 1=Errors, 2=Basic, 3=Verbose
   unsigned long lastStatusPrint = 0;
   unsigned long lastBmsMessageTime = 0;
   

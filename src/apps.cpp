@@ -51,7 +51,7 @@ double get_apps_reading() {
   // Return the average percentage if plausible
   double average_percent = (apps_1_percent + apps_2_percent) / 2.0;
 
-  if (DEBUG_MODE >= 3) {
+  if (DEBUG_MODE >= 6) {
     static unsigned long last_apps_print = 0;
     if (millis() - last_apps_print > 1000) {
       Serial.print("APPS Readings - Raw: ");

@@ -7,6 +7,10 @@ int motorRPM = 0;
 float batteryVoltage = 0;
 int motorTemperature = 0;
 
+// MPU6050 variables
+Adafruit_MPU6050 mpu;
+bool mpuInitialized = false;
+
 void setup() {
   Serial.begin(115200);
   while (!Serial && millis() < 2000);  // Wait max 2 seconds
@@ -17,14 +21,21 @@ void setup() {
   digitalWrite(BRAKE_LIGHT_PIN, LOW);
   
   // Initialize CAN
-  can.setDebugLevel(3);  // Maximum debug output initially
+  can.setDebugLevel(0);  // Maximum debug output initially
   if (!can.begin(500000)) {
     Serial.println("FATAL: CAN initialization failed!");
-    // Continue anyway - it might start working later
+  } else {
+    Serial.println("CAN initialized successfully");
   }
   
   // Initialize error monitoring pins
   monitor_errors_setup();
+  
+  // Initialize MPU6050
+  mpuInitialized = initializeMPU();
+  if (!mpuInitialized) {
+    Serial.println("WARNING: MPU6050 initialization failed - brake light deceleration detection disabled");
+  }
   
   // Request initial data from motor controller
   Serial.println("Requesting initial motor data...");
@@ -86,9 +97,25 @@ void loop() {
     Serial.print(pedal_position);
     Serial.print(" |  Torque Request: ");
     int torqueInt = (int)((pedal_position / 100.0) * 32767);
-    Serial.println(torqueInt);
+    Serial.print(torqueInt);
+    Serial.print("  | Combined Brakes: ");
+    Serial.print(brakePressureCombined);
+    Serial.print("  | Brake Light: ");
+    Serial.print(digitalRead(BRAKE_LIGHT_PIN) ? "ON" : "OFF");
+    Serial.print("  | MPU Angle: ");
+    if (mpuInitialized) {
+      sensors_event_t a, g, temp;
+      mpu.getEvent(&a, &g, &temp);
+      Serial.print(a.acceleration.x, 1);
+      Serial.print(", ");
+      Serial.print(a.acceleration.y, 1);
+      Serial.print(", ");
+      Serial.print(a.acceleration.z, 1);
+    } else {
+      Serial.println("MPU not initialized");
+    }
+    Serial.println("  | Deceleration: ");
 
-    
     last_debug = millis();
   }
 }

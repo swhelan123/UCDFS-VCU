@@ -11,8 +11,6 @@
 //   is connected to which specific digital input pin (22-37).
 // - Update motor_controller.cpp to check the relevant errorXX flags and trigger
 //   zero torque for critical faults.
-// - Consider using an array or bitmask for error flags instead of individual
-//   variables if managing many flags becomes cumbersome.
 
 #include "header.h" // Includes Arduino.h for pinMode, digitalRead
 
@@ -117,9 +115,6 @@ void monitor_errors_loop() {
     case 37:
       error37 = (state == HIGH) ? 1 : 0;
       break;
-      // Add cases if pin range changes
     }
   }
-  // Optional: Add debug printing here if needed to see flag states
-  // if (DEBUG_MODE >= 2) { ... print errorXX values ... }
 }

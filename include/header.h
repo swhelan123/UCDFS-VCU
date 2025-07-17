@@ -1,7 +1,6 @@
 /**
  * @file header.h
- * @brief Central header file including libraries, constants, pin definitions,
- * and function prototypes.
+ * @brief Central header file including libraries, constants, pin definitions, and function prototypes
  * @author Shane Whelan (UCD Formula Student)
  * @date 2025-04-27
  */
@@ -25,9 +24,9 @@
 #include <stdint.h> // For fixed-width integer types
 
 // ------------ ARDUINO LIBRARIES ------------
-#include <Arduino.h> // Include Arduino core functionality (pinMode, analogRead, etc.)
-#include <SPI.h>  // Required by due_can? Keep if needed.
-#include <Wire.h> // For I2C devices like MPU6050
+#include <Arduino.h>
+#include <SPI.h>
+#include <Wire.h>
 
 // Undefine Arduino's min/max macros to avoid conflicts with C++ standard library
 #undef max
@@ -36,21 +35,19 @@
 #include <limits>
 
 // ------------ EXTERNAL LIBRARIES ------------
-#include <Adafruit_MPU6050.h> // For MPU6050 sensor
-#include <Adafruit_Sensor.h>  // Required by Adafruit MPU6050 library
-#include <Nextion.h>          // For Nextion display (if used)
-#include <due_can.h>          // CAN library for Arduino Due
+#include <Adafruit_MPU6050.h>
+#include <Adafruit_Sensor.h>
+#include <Nextion.h>
+#include <due_can.h>
 
 // ------------ PROJECT MODULES ------------
 #include "apps.h"        // APPS reading constants/functions
 #include "bamocar-due.h" // Bamocar motor controller library
-#include "bms_handler.h" // BMS data handler
-#include "can_manager.h" // CAN bus manager
-#include "globals.h"     // Global variable declarations
+#include "simple_can.h"  // For standardising a central module for CAN comms
 
 // ------------ CONSTANTS ------------
 // --- General ---
-const int DEBUG_MODE = 4; // 0=Off (Clean output for testing), 1=Essential, 2=Verbose, 3=Very Verbose, 4=Max Debug
+const int DEBUG_MODE = 4; // 0=Off, 1=Essential, 2=Verbose, 3=Very Verbose, 4=Max Debug
 
 // VCU-HACK: Set to true to bypass BMS checks for bench testing without a BMS.
 // MUST BE FALSE FOR VEHICLE OPERATION.
@@ -64,15 +61,11 @@ const int APPS_1_PIN = A6;
 const int APPS_2_PIN = A7;
 // Digital Pins
 const int BRAKE_LIGHT_PIN = 7;
-// TODO: Define pins used for monitoring critical errors (IMD, BSPD, etc.)
-const int ERROR_PIN_START = 22; // Example start pin for error monitoring
-const int ERROR_PIN_END = 37;   // Example end pin for error monitoring
-// const int IMD_FAULT_PIN = 22; // Example specific pin
-// const int BSPD_FAULT_PIN = 23; // Example specific pin
+const int ERROR_PIN_START = 22; // Start pin for error monitoring
+const int ERROR_PIN_END = 37;   // End pin for error monitoring
 
 // --- Thresholds & Parameters ---
 // Brake System
-// TODO: Calibrate these thresholds based on sensor readings
 const int BRAKE_LIGHT_THRESHOLD = 109; // Calibrated
 const int BRAKE_LIGHT_HYSTERESIS = 2; // Calibrated
 // TODO: Verify necessity/logic/value for tilt activation
@@ -82,44 +75,46 @@ const int APPS_BRAKE_PLAUSIBILITY_THRESHOLD =
     25; // % APPS request threshold for brake plausibility check (Rule EV.5.7)
 
 // APPS
-const float APPS_PLAUSIBILITY_THRESHOLD =
-    10.0f; // % difference threshold (Rule EV.5.6)
+const float APPS_PLAUSIBILITY_THRESHOLD = 10.0f; // % difference threshold (Rule EV.5.6)
 
 // Timing
-const unsigned long APPS_PLAUSIBILITY_TIMEOUT_MS =
-    100; // Max time for APPS implausibility (Rule EV.5.6.3)
-const unsigned long APPS_BRAKE_PLAUSIBILITY_TIMEOUT_MS =
-    500; // Max time for APPS/Brake implausibility (Rule EV.2.3.1)
+const unsigned long APPS_PLAUSIBILITY_TIMEOUT_MS = 100; // Max time for APPS implausibility (Rule EV.5.6.3)
+const unsigned long APPS_BRAKE_PLAUSIBILITY_TIMEOUT_MS = 500; // Max time for APPS/Brake implausibility (Rule EV.2.3.1)
 
 // ------------ GLOBAL OBJECT INSTANCES (declared extern here) ------------
-// These are defined in their respective .cpp files or main.cpp
-extern CANManager can_manager;
-extern BMSHandler bms_handler;
-extern Bamocar bamocar;
-extern Adafruit_MPU6050 mpu; // If MPU6050 is used globally
+extern Adafruit_MPU6050 mpu;
+
+// ------------ GLOBAL VARIABLES ------------
+extern int brakePressureFront;
+extern int brakePressureRear;
+extern int brakePressureCombined;
+extern int brakeIdleValueFront;
+extern int brakeIdleValueRear;
+extern int brakeIdleValueCombined;
+extern int dynamicBrakeThreshold;
+extern bool brakeInitialized;
+extern int vehicleSpeed;
+extern int motorRPM;
+extern float batteryVoltage;
+extern int motorTemperature;
+extern bool mpuInitialized;
+
 
 // ------------ FUNCTION PROTOTYPES ------------
-
-// --- Core Modules ---
-// void can_manager_initialize(uint32_t baudrate); // Now part of CANManager
-// class void can_manager_process_incoming();           // Now part of
-// CANManager class void bms_handler_initialize();                 // Now part
-// of BMSHandler class
 
 // --- Sensor/Input Modules ---
 double get_apps_reading(); // Returns pedal position (%) or -1.0 on implausibility
 void brake_light(); // Reads brake pressure, MPU, controls brake light
+void recalibrate_brake_idle(); // Recalibrate brake idle values
 
 // --- Actuator/Control Modules ---
-void motor_control_update(); // New function to handle motor control logic
-                             // including safety checks
-
+void motor_control_update(); // Handle motor control logic including safety checks
 
 // --- Monitoring/Dashboard Modules ---
-void monitor_errors_setup(); // Renamed from monitor_pins_setup
-void monitor_errors_loop();  // Renamed from monitor_pins_loop
-void dash_setup();           // Setup for Nextion display (if used)
-void dash_loop();            // Update loop for Nextion display (if used)
+void monitor_errors_setup(); // Setup error monitoring
+void monitor_errors_loop();  // Error monitoring loop
+void dash_setup();           // Setup for Nextion display
+void dash_loop();            // Update loop for Nextion display
 
 // --- Utility Functions ---
 bool initializeMPU(); // Initialize MPU6050 sensor

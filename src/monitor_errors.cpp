@@ -6,7 +6,7 @@
  * @date 2025-04-27
  */
 
-// TODO:
+// TODO: find pins for each error signal, possibly don't even need this file
 // - Clearly define which physical error signal (e.g., IMD Fault, BSPD Fault)
 //   is connected to which specific digital input pin (22-37).
 // - Update motor_controller.cpp to check the relevant errorXX flags and trigger

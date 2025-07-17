@@ -1,15 +1,19 @@
 #include "header.h"
 
+// MPU6050 variables
+Adafruit_MPU6050 mpu;
+bool mpuInitialized = false;
+
+// Motor controller test mode
+// TODO: SET TO FALSE FOR VEHICLE OPERATION
+bool BAMOCAR_TEST_MODE = true;
+
 // Global variables
 int brakePressure = 0;
 int vehicleSpeed = 0;
 int motorRPM = 0;
 float batteryVoltage = 0;
 int motorTemperature = 0;
-
-// MPU6050 variables
-Adafruit_MPU6050 mpu;
-bool mpuInitialized = false;
 
 void setup() {
   Serial.begin(115200);
@@ -30,6 +34,21 @@ void setup() {
   
   // Initialize error monitoring pins
   monitor_errors_setup();
+
+  if (BAMOCAR_TEST_MODE) {
+    Serial.println("BAMOCAR TEST: Requesting controller data...");
+    can.requestBamocarData(0x40, 0x64); // STATUS every 100ms
+    can.requestBamocarData(0x30, 0x64); // RPM every 100ms  
+    can.requestBamocarData(0x90, 0x64); // TORQUE every 100ms
+    can.requestBamocarData(0xE2, 0x64); // READY state every 100ms
+    can.requestBamocarData(0x49, 0xC8); // MOTOR TEMP every 200ms
+    
+    // Enable controller for testing
+    Serial.println("BAMOCAR TEST: Enabling controller...");
+    can.sendBamocarCmd(0x51, 0x01);
+    Serial.println("BAMOCAR TEST: Move pedal to send commands");
+    Serial.println("-----------------------------------------");
+  } else
   
   // Initialize MPU6050
   mpuInitialized = initializeMPU();
@@ -78,7 +97,7 @@ void loop() {
   
   // Debug output
   static unsigned long last_debug = 0;
-  if (millis() - last_debug > 1000) {
+  if (millis() - last_debug > 0) {
     Serial.print("[STATUS] BMS: ");
     Serial.print(can.getPackVoltage(), 1);
     Serial.print("V, ");
@@ -90,7 +109,7 @@ void loop() {
     Serial.print(" | Front Brake:");
     Serial.print(brakePressureFront);
     Serial.print(" | Bamocar:0x");
-    Serial.print("STATUS");  // Replace with actual status when available
+    Serial.print(can.getSystemError() ? "ERROR" : "OK");  // Replace with actual status when available
     Serial.print(" | Brake Light: ");
     Serial.print(digitalRead(BRAKE_LIGHT_PIN) ? "ON" : "OFF");
     Serial.print(" | APPS: ");
@@ -114,8 +133,22 @@ void loop() {
     } else {
       Serial.println("MPU not initialized");
     }
-    Serial.println("  | Deceleration: ");
-
-    last_debug = millis();
+    
+      Serial.println();
+      Serial.println();
+      Serial.println("\n----- BAMOCAR TEST STATUS -----");
+      Serial.print("Motor RPM: ");
+      Serial.print(can.getMotorRPM());
+      Serial.print(" | Torque: ");
+      Serial.print(can.getMotorTorque());
+      Serial.print("Nm | Temp: ");
+      Serial.print(can.getMotorTemp());
+      Serial.println("°C");
+      Serial.print("Controller Status: 0x");
+      Serial.print(can.getSystemError() ? "ERROR" : "OK");
+      Serial.print(" | Ready State: ");
+      Serial.println(can.getSystemError() ? "NOT READY" : "READY");
+      Serial.println("-----------------------------\n");
+      last_debug = millis();
+    }
   }
-}

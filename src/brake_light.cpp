@@ -71,18 +71,6 @@ void brake_light() {
 
     // Calculate deceleration (assuming negative x is deceleration)
     deceleration_m_s2 = -a.acceleration.x;
-
-    if (DEBUG_MODE >= 2) {
-      static unsigned long lastMPUPrint = 0;
-      // if (millis() - lastMPUPrint > 500) {
-      //   Serial.print("MPU Accel X: ");
-      //   Serial.print(a.acceleration.x, 2);
-      //   Serial.print(" m/s^2 -> Decel: ");
-      //   Serial.print(deceleration_m_s2, 2);
-      //   Serial.println(" m/s^2");
-      //   lastMPUPrint = millis();
-      // }
-    }
   }
 
   // Debug output for brake pressure readings
@@ -126,10 +114,6 @@ void brake_light() {
   // Apply hysteresis for turning the light OFF
   static bool brake_light_on = false;
   if (activate_brake_light) {
-    if (!brake_light_on) {
-      // if (DEBUG_MODE)
-      //   Serial.println("Brake Light ON");
-    }
     digitalWrite(BRAKE_LIGHT_PIN, HIGH);
     brake_light_on = true;
   } else {

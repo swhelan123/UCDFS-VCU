@@ -3,14 +3,9 @@
  * @brief Central header file including libraries, constants, pin definitions, and function prototypes
  * @author Shane Whelan (UCD Formula Student)
  * @date 2025-04-27
- */
+*/
 
-// TODO:
-// - Calibrate BRAKE_LIGHT_THRESHOLD based on sensor readings and desired light
-// activation point.
-// - Calibrate BRAKE_LIGHT_HYSTERESIS for desired behavior.
-// - Verify the necessity and logic of using TILT_THRESHOLD_DEG for brake light
-// activation;
+// TODO: calibration below
 //   consider using deceleration directly from MPU if required by rules
 //   (T6.3.1).
 // - Define pins and logic for monitoring critical errors (IMD, BSPD etc.) via
@@ -50,7 +45,7 @@
 const int DEBUG_MODE = 4; // 0=Off, 1=Essential, 2=Verbose, 3=Very Verbose, 4=Max Debug
 
 // VCU-HACK: Set to true to bypass BMS checks for bench testing without a BMS.
-// MUST BE FALSE FOR VEHICLE OPERATION.
+// TODO: MUST BE FALSE FOR VEHICLE OPERATION.
 const bool BENCH_TESTING_MODE = true;
 
 // --- Pins ---
@@ -114,6 +109,7 @@ void dash_setup();           // Setup for Nextion display
 void dash_loop();            // Update loop for Nextion display
 void checkCriticalSystems(); // Check critical systems and update warnings
 const char* getErrorString(int errorCode); // Get error string from error code
+void sendPlottableData(); // Send data for plotting
 
 // --- Utility Functions ---
 bool initializeMPU(); // Initialize MPU6050 sensor

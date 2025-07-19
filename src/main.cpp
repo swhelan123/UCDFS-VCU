@@ -1,3 +1,16 @@
+/**
+ * @file main.cpp
+ * @brief Main entry point for the UCD Formula Student Electric Vehicle Controller
+ * @details Initializes hardware, processes CAN messages, and manages vehicle control logic.
+ *          Handles brake light activation based on brake pressure and deceleration.
+ *          Monitors motor controller status and updates dashboard display.
+ *          Implements basic motor control logic based on pedal position and brake status.
+ *          Uses Adafruit MPU6050 for deceleration detection.
+ *          Integrates with Nextion display for user interface.
+ * @author Shane Whelan (UCD Formula Student)
+ * @date 18-07-2025
+*/
+
 #include "header.h"
 
 // MPU6050 variables
@@ -16,7 +29,9 @@ float batteryVoltage = 0;
 int motorTemperature = 0;
 
 void setup() {
-  Serial.begin(115200);
+  WDT_Enable(WDT, WDT_MR_WDRSTEN | WDT_MR_WDDBGHLT | WDT_MR_WDIDLEHLT | WDT_MR_WDV(4095));
+
+  Serial.begin(9600);
   while (!Serial && millis() < 2000);  // Wait max 2 seconds
   Serial.println("\n--- UCD FS EV Controller Starting ---");
   
@@ -48,7 +63,7 @@ void setup() {
     can.sendBamocarCmd(0x51, 0x01);
     Serial.println("BAMOCAR TEST: Move pedal to send commands");
     Serial.println("-----------------------------------------");
-  } else
+  }
   
   // Initialize MPU6050
   mpuInitialized = initializeMPU();
@@ -62,11 +77,22 @@ void setup() {
   can.requestBamocarData(0x90, 0x64);  // Torque
   can.requestBamocarData(0x49, 0xC8);  // Motor temp
   can.requestBamocarData(0x40, 0x64);  // Status
+
+  nextion_setup(); // Initialize Nextion display
   
   Serial.println("--- Setup Complete ---");
 }
 
 void loop() {
+  // Reset watchdog (must be called regularly to avoid reset)
+  WDT_Restart(WDT);
+
+  static int lastEnableTime = 0;
+  if (millis() - lastEnableTime > 1000) {  // Every 1 second
+  can.sendBamocarCmd(0x51, 0x01);  // Enable command
+  lastEnableTime = millis();
+}
+
   // Process CAN messages
   can.update();
   
@@ -94,6 +120,9 @@ void loop() {
   
   // Monitor errors
   monitor_errors_loop();
+
+  // calculate vehicle speed from RPM
+  vehicleSpeed = calculateVehicleSpeed(motorRPM);
   
   // Debug output
   static unsigned long last_debug = 0;
@@ -151,4 +180,17 @@ void loop() {
       Serial.println("-----------------------------\n");
       last_debug = millis();
     }
+
+    // --- Update Nextion Displays (throttled to a reasonable rate) ---
+  static unsigned long last_display_update = 0;
+  if (millis() - last_display_update > 20) { // Update displays 50 times a second
+
+    // Update the main driver-facing values
+    nextion_update_driver_page();
+    
+    // Update all the fields on the dev page
+    nextion_update_dev_page();
+    
+    last_display_update = millis();
+  }
   }

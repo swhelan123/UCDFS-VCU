@@ -42,7 +42,8 @@
 
 // ------------ CONSTANTS ------------
 // --- General ---
-const int DEBUG_MODE = 4; // 0=Off, 1=Essential, 2=Verbose, 3=Very Verbose, 4=Max Debug
+//TODO: MUST BE 0 FOR VEHICLE OPERATION
+const int DEBUG_MODE = 0; // 0=Off, 1=Essential, 2=Verbose, 3=Very Verbose, 4=Max Debug
 
 // VCU-HACK: Set to true to bypass BMS checks for bench testing without a BMS.
 // TODO: MUST BE FALSE FOR VEHICLE OPERATION.
@@ -107,11 +108,15 @@ void monitor_errors_setup(); // Setup error monitoring
 void monitor_errors_loop();  // Error monitoring loop
 void dash_setup();           // Setup for Nextion display
 void dash_loop();            // Update loop for Nextion display
+void nextion_setup();        // Setup Nextion display (Dev Page Mode)
+void nextion_update_driver_page(); // Update main driving display (Page 1)
+void nextion_update_dev_page();    // Update dev/debug page (Page 3)
 void checkCriticalSystems(); // Check critical systems and update warnings
 const char* getErrorString(int errorCode); // Get error string from error code
 void sendPlottableData(); // Send data for plotting
 
 // --- Utility Functions ---
 bool initializeMPU(); // Initialize MPU6050 sensor
+int calculateVehicleSpeed(int motorRPM); // Calculate vehicle speed from motor RPM
 
 #endif // HEADER_H

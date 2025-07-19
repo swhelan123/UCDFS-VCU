@@ -1,210 +1,108 @@
-// dashboard_display.cpp
-// Written by Shane Whelan
-// UCD Formula Student
+#include "header.h" // Assumes this includes Nextion.h and other necessary headers
 
-#include "header.h"
+// --- Nextion Configuration ---
+// IMPORTANT: The component names ("dbg_bms_v", etc.) MUST MATCH the "objname" 
+// property you set for each text box in your Nextion Editor on the dev page.
 
-// Dashboard-specific global variables
-int inverterTemperature = 0;
-bool lapTimerRunning = false;
-int lapMinutes = 0;
-int lapSeconds = 0;
-int lapMillis = 0;
-int throttlePosition = 0;
-float currentDraw = 0.0;
-float powerOutput = 0.0;
-char driveModeStr[20] = "NORMAL";
-char systemStatusStr[30] = "OK";
-char errorCodeStr[10] = "NONE";
-bool regenActive = false;
-char trackPositionStr[20] = "START";
-int batterySOC = 100;
-bool systemAlert = false;
-bool systemWarning = false;
-char alertMessageStr[50] = "";
-char warningMessageStr[50] = "";
-int motorTempWarningThreshold = 80;
-float batteryVoltageMinThreshold = 20.0;
-int systemErrorCode = 0;
+// -- Page 1: Main Driving Display --
+NexText p1_speed = NexText(1, 4, "t1");
+NexText p1_soc   = NexText(1, 6, "t3");
 
-// Define Nextion objects for page 2
-// Text components
-NexText a1 = NexText(2, 1, "a1");  
-NexText a2 = NexText(2, 2, "a2");  // Regen Status
-NexText a3 = NexText(2, 3, "a3");  // Battery Voltage
-NexText a4 = NexText(2, 4, "a4");  // Motor Temp
-NexText a5 = NexText(2, 5, "a5");  // Inverter Temp
-NexText a6 = NexText(2, 6, "a6");  // Lap Time
-NexText a7 = NexText(2, 7, "a7");  // Brake Pressure
-NexText a8 = NexText(2, 8, "a8");  // Throttle Position
-NexText a9 = NexText(2, 9, "a9");  // Current Draw
-NexText a10 = NexText(2, 10, "a10"); // Power Output
-NexText a11 = NexText(2, 11, "a11"); // Drive Mode
-NexText a12 = NexText(2, 12, "a12"); // System Status
-NexText a13 = NexText(2, 13, "a13"); // Error Code
+// -- Page 3: Dev Page Components --
+// [STATUS] Section
+NexText dbg_bms_v      = NexText(3, 4, "dbg_bms_v");     // BMS Voltage
+NexText dbg_bms_soc    = NexText(3, 5, "dbg_bms_soc");    // BMS State of Charge
+NexText dbg_bms_flt    = NexText(3, 6, "dbg_bms_flt");    // BMS Fault Status
+NexText dbg_brk_r      = NexText(3, 7, "dbg_brk_r");      // Rear Brake Pressure
+NexText dbg_brk_f      = NexText(3, 8, "dbg_brk_f");      // Front Brake Pressure
+NexText dbg_brk_c      = NexText(3, 9, "dbg_brk_c");      // Combined Brake Pressure
+NexText dbg_brk_lt     = NexText(3, 10, "dbg_brk_lt");     // Brake Light Status
+NexText dbg_apps       = NexText(3, 11, "dbg_apps");       // APPS Pedal Position
+NexText dbg_torq_req   = NexText(3, 12, "dbg_torq_req");   // Torque Request
+NexText dbg_mpu        = NexText(3, 13, "dbg_mpu");       // MPU Angle (X,Y,Z)
 
-NexText t1 = NexText(2, 14, "t1");   // System Messages
-NexText t2 = NexText(2, 15, "t2");   // Run Time
-NexText t4 = NexText(2, 16, "t4");   // RPM
-NexText t5 = NexText(2, 17, "t5");   // Battery State of Charge
+// ----- BAMOCAR TEST STATUS ----- Section
+NexText dbg_rpm        = NexText(3, 14, "dbg_rpm");       // Motor RPM
+NexText dbg_torq_act   = NexText(3, 15, "dbg_torq_act");  // Actual Motor Torque
+NexText dbg_mtemp      = NexText(3, 16, "dbg_mtemp");     // Motor Temperature
+NexText dbg_bamo_stat  = NexText(3, 17, "dbg_bamo_stat"); // Bamocar Controller Status
+NexText dbg_bamo_rdy   = NexText(3, 18, "dbg_bamo_rdy");  // Bamocar Ready State
 
-NexText d1 = NexText(2, 18, "d1");   // Speed
+// Buffer for formatting text before sending
+char text_buffer[64];
 
-// Progress bars
-NexProgressBar progBattery = NexProgressBar(2, 19, "j0");  // Battery Level
-NexProgressBar progThrottle = NexProgressBar(2, 20, "j1");  // Throttle Position
-
-// Nextion touch event list
-NexTouch *nex_listen_list[] = { NULL };
-
-// Variables for elapsed time
-unsigned long elapsedMillis = 0;
-unsigned long previousMillis = 0;
-
-// Buffer for text conversion
-char buffer[40];
-
-void dash_setup() {
-  Serial1.begin(9600);  // Serial for Nextion communication
-  
-  // Initialize the Nextion display
+void nextion_setup() {
+  Serial3.begin(9600); 
+  delay(500);
+  Serial.print("Initializing Nextion display...");
   nexInit();
-  
-  Serial.println("Nextion display initialized!");
+  Serial.println("Nextion display initialized (Dev Page Mode).");
 }
 
-void dash_loop() {
-  // Calculate elapsed time
-  unsigned long currentMillis = millis();
-  elapsedMillis += currentMillis - previousMillis;
-  previousMillis = currentMillis;
+/**
+ * @brief Updates the main driving display (Page 1)
+ */
+void nextion_update_driver_page() {
+  sprintf(text_buffer, "%d", vehicleSpeed);
+  p1_speed.setText(text_buffer);
 
-  // Convert elapsed time into hours, minutes, and seconds
-  unsigned long totalSeconds = elapsedMillis / 1000;
-  int hours = totalSeconds / 3600;
-  int minutes = (totalSeconds % 3600) / 60;
-  int seconds = totalSeconds % 60;
-  int fracSecs = (elapsedMillis % 1000) / 10;
-  
-  // Update display with real vehicle data
-  
-  // Speed - using real vehicle speed from VCU
-  sprintf(buffer, "%d km/h", vehicleSpeed);
-  a1.setText(buffer);
-  
-  // RPM - actual motor RPM from motor controller
-  sprintf(buffer, "%d", motorRPM);
-  a2.setText(buffer);
-  
-  // Battery Voltage - from BMS
-  sprintf(buffer, "%.1f V", batteryVoltage);
-  a3.setText(buffer);
-  
-  // Motor Temperature - from motor thermistor/sensor
-  sprintf(buffer, "%d C", motorTemperature);
-  a4.setText(buffer);
-  
-  // Inverter Temperature - from inverter sensors
-  sprintf(buffer, "%d C", inverterTemperature);
-  a5.setText(buffer);
-  
-  // Lap Time - from lap timing system or GPS
-  if (lapTimerRunning) {
-    sprintf(buffer, "%02d:%02d.%02d", lapMinutes, lapSeconds, lapMillis/10);
+  sprintf(text_buffer, "%.0f%%", can.getPackSOC()); // Fix: use %.0f for double
+  p1_soc.setText(text_buffer);
+}
+
+/**
+ * @brief Updates all the individual fields on the dev/debug page based on the provided Serial block.
+ */
+void nextion_update_dev_page() {
+  // This function assumes global variables like 'brakePressureRear', 'mpuInitialized', etc. are accessible.
+  double pedal_position = get_apps_reading(); // Get current pedal reading
+
+  // --- [STATUS] Section ---
+  sprintf(text_buffer, "%.1f V", can.getPackVoltage());
+  dbg_bms_v.setText(text_buffer);
+
+  sprintf(text_buffer, "%.0f %%", can.getPackSOC()); // Fix: use %.0f for double
+  dbg_bms_soc.setText(text_buffer);
+
+  dbg_bms_flt.setText(can.getSystemError() ? "FAULT" : "OK");
+
+  sprintf(text_buffer, "%d", brakePressureRear);
+  dbg_brk_r.setText(text_buffer);
+
+  sprintf(text_buffer, "%d", brakePressureFront);
+  dbg_brk_f.setText(text_buffer);
+
+  sprintf(text_buffer, "%d", brakePressureCombined);
+  dbg_brk_c.setText(text_buffer);
+
+  dbg_brk_lt.setText(digitalRead(BRAKE_LIGHT_PIN) ? "ON" : "OFF");
+
+  sprintf(text_buffer, "%.1f", pedal_position);
+  dbg_apps.setText(text_buffer);
+
+  int torqueInt = (int)((pedal_position / 100.0) * 32767);
+  sprintf(text_buffer, "%d", torqueInt);
+  dbg_torq_req.setText(text_buffer);
+
+  if (mpuInitialized) {
+    sensors_event_t a, g, temp;
+    mpu.getEvent(&a, &g, &temp);
+    sprintf(text_buffer, "%.1f,%.1f,%.1f", a.acceleration.x, a.acceleration.y, a.acceleration.z);
+    dbg_mpu.setText(text_buffer);
   } else {
-    sprintf(buffer, "--:--:--");
+    dbg_mpu.setText("Not Init");
   }
-  a6.setText(buffer);
-  
-  // Brake Pressure - from brake pressure sensor
-  sprintf(buffer, "%d bar", brakePressureCombined);
-  a7.setText(buffer);
-  
-  // Throttle Position - from throttle position sensor
-  sprintf(buffer, "%d%%", throttlePosition);
-  a8.setText(buffer);
-  
-  // Current Draw - from motor controller or current sensor
-  sprintf(buffer, "%.1f A", currentDraw);
-  a9.setText(buffer);
-  
-  // Power Output - calculated from voltage and current
-  sprintf(buffer, "%.1f kW", powerOutput);
-  a10.setText(buffer);
-  
-  // Drive Mode - from VCU drive mode setting
-  a11.setText(driveModeStr);
-  
-  // System Status
-  a12.setText(systemStatusStr);
-  
-  // Error Code
-  a13.setText(errorCodeStr);
-  
-  // Regen Status - based on actual regen braking state
-  t1.setText(regenActive ? "REGEN ON" : "REGEN OFF");
-  
-  // Run Time - vehicle run time since power-on
-  sprintf(buffer, "%02d:%02d:%02d", hours, minutes, seconds);
-  t2.setText(buffer);
-  
-  // Track Position - from GPS or track position system
-  sprintf(buffer, "%s", trackPositionStr);
-  t4.setText(buffer);
-  
-  // Battery State of Charge - from BMS
-  sprintf(buffer, "%d%%", batterySOC);
-  t5.setText(buffer);
-  
-  // System Messages - display critical alerts or status messages
-  if (systemAlert) {
-    d1.setText(alertMessageStr);
-  } else if (systemWarning) {
-    d1.setText(warningMessageStr);
-  } else {
-    d1.setText("SYSTEMS NOMINAL");
-  }
-  
-  // Update progress bars with real data
-  progBattery.setValue(batterySOC);        // Battery level progress bar
-  progThrottle.setValue(throttlePosition);  // Throttle position progress bar
-  
-  // Check for any errors or warnings that need to be displayed
-  checkCriticalSystems();
-}
 
-// Function to get error string from error code
-const char* getErrorString(int errorCode) {
-  switch(errorCode) {
-    case 1: return "BMS_FAULT";
-    case 2: return "MOTOR_TEMP";
-    case 3: return "APPS_FAULT";
-    case 4: return "BRAKE_FAULT";
-    case 5: return "CAN_ERROR";
-    default: return "UNKNOWN";
-  }
-}
+  // --- BAMOCAR TEST STATUS Section ---
+  sprintf(text_buffer, "%.0f RPM", can.getMotorRPM()); 
+  dbg_rpm.setText(text_buffer);
 
-// Function to check critical systems and update warnings
-void checkCriticalSystems() {
-  // Check for temperature warnings
-  if (motorTemperature > motorTempWarningThreshold) {
-    sprintf(alertMessageStr, "MOTOR TEMP HIGH: %dC", motorTemperature);
-    systemWarning = true;
-  }
-  
-  // Check for battery voltage warnings
-  if (batteryVoltage < batteryVoltageMinThreshold) {
-    sprintf(alertMessageStr, "BATTERY LOW: %.1fV", batteryVoltage);
-    systemWarning = true;
-  }
-  
-  // Check for critical errors from VCU
-  if (systemErrorCode != 0) {
-    sprintf(alertMessageStr, "ERROR: %s", getErrorString(systemErrorCode));
-    systemAlert = true;
-  }
-  
-  // Check for any other system issues
-  // Add additional checks as needed
+  sprintf(text_buffer, "%.1f Nm", can.getMotorTorque());
+  dbg_torq_act.setText(text_buffer);
+
+  sprintf(text_buffer, "%.1f C", can.getMotorTemp());
+  dbg_mtemp.setText(text_buffer);
+
+  dbg_bamo_stat.setText(can.getSystemError() ? "ERROR" : "OK");
+  dbg_bamo_rdy.setText(can.getSystemError() ? "NOT READY" : "READY");
 }

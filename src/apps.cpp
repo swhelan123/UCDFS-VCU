@@ -24,6 +24,11 @@ double get_apps_reading() {
   int apps_1_raw = analogRead(APPS_1_PIN);
   int apps_2_raw = analogRead(APPS_2_PIN);
 
+  // Keep track of the last known plausible pedal position
+  static double last_plausible_percent = 0.0;
+  // Timer to track how long the sensors have been implausible
+  static unsigned long implausibility_start_time = 0;
+
   // Convert raw ADC values directly to percentage (0-100) - INVERTED values
   // Note: values decrease as pedal is pressed, so we invert the calculation
   double apps_1_percent = 100.0 * (APPS1_RAW_MAX - apps_1_raw) / 
@@ -38,18 +43,31 @@ double get_apps_reading() {
   // Check for implausibility (FSUK EV.5.6: deviation > 10%)
   if (std::fabs(apps_1_percent - apps_2_percent) > 
       APPS_PLAUSIBILITY_THRESHOLD) {
-    if (DEBUG_MODE) {
-      Serial.print("APPS Implausibility Detected! APPS1: ");
-      Serial.print(apps_1_percent);
-      Serial.print("%, APPS2: ");
-      Serial.print(apps_2_percent);
-      Serial.println("%");
+    if (implausibility_start_time == 0) {
+      // First detection of implausibility, start the timer
+      implausibility_start_time = millis();
+    } else if (millis() - implausibility_start_time >
+               APPS_PLAUSIBILITY_TIMEOUT_MS) {
+      // Implausibility has persisted for > 100ms, flag a critical error
+      if (DEBUG_MODE) {
+        Serial.print("APPS Implausibility ERROR! APPS1: ");
+        Serial.print(apps_1_percent);
+        Serial.print("%, APPS2: ");
+        Serial.print(apps_2_percent);
+        Serial.println("%");
+      }
+      return -1.0; // Indicate critical implausibility
     }
-    return -1.0; // Indicate implausibility
+    // During the <100ms window, return the last known good value
+    return last_plausible_percent;
+  } else {
+    // Sensors are plausible, reset the timer
+    implausibility_start_time = 0;
   }
 
-  // Return the average percentage if plausible
+  // If plausible, calculate the average and update the last known good value
   double average_percent = (apps_1_percent + apps_2_percent) / 2.0;
+  last_plausible_percent = average_percent;
 
   if (DEBUG_MODE >= 6) {
     static unsigned long last_apps_print = 0;

@@ -124,6 +124,7 @@ void loop() {
   // calculate vehicle speed from RPM
   vehicleSpeed = calculateVehicleSpeed(motorRPM);
   
+  if (DEBUG_MODE >= 4){
   // Debug output
   static unsigned long last_debug = 0;
   if (millis() - last_debug > 0) {
@@ -180,6 +181,7 @@ void loop() {
       Serial.println("-----------------------------\n");
       last_debug = millis();
     }
+  }
 
     // --- Update Nextion Displays (throttled to a reasonable rate) ---
   static unsigned long last_display_update = 0;
@@ -193,4 +195,4 @@ void loop() {
     
     last_display_update = millis();
   }
-  }
+}
